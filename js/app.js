@@ -9,6 +9,7 @@ import { buildMidi, download, projectToText, slug } from './export.js';
 import { barBeats, extractChords, newSong, songEnd } from './songmidi.js';
 import { createStudio } from './midiui.js';
 import { DEFAULTS, deleteProject, loadCurrent, loadLibrary, loadSettings, normalizeProject, saveProject, saveSettings } from './store.js';
+import { AUTHOR, NOTES, VERSION } from './version.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -876,9 +877,12 @@ function paintKeyboard() {
 }
 
 // ======================= Hai khu làm việc =======================
-let view = 'chords';
+let view = 'home';
 function showView(name) {
   view = name;
+  $('#view-home').hidden = name !== 'home';
+  $('#tab-home').setAttribute('aria-selected', String(name === 'home'));
+  if (name === 'home') renderHome();
   $('#view-chords').hidden = name !== 'chords';
   $('#view-midi').hidden = name !== 'midi';
   $('#tab-chords').setAttribute('aria-selected', String(name === 'chords'));
@@ -887,10 +891,34 @@ function showView(name) {
   else studio && requestAnimationFrame(() => studio.resize());
   window.scrollTo({ top: 0 });
 }
-const routeFromHash = () => (location.hash === '#midi' ? 'midi' : 'chords');
+const routeFromHash = () => (location.hash === '#midi' ? 'midi' : location.hash === '#hop-am' ? 'chords' : 'home');
+$('#tab-home').addEventListener('click', () => { location.hash = '#trang-chu'; });
 $('#tab-chords').addEventListener('click', () => { location.hash = '#hop-am'; });
 $('#tab-midi').addEventListener('click', () => { location.hash = '#midi'; });
 window.addEventListener('hashchange', () => showView(routeFromHash()));
+
+function renderHome() {
+  const r = $('#home-resume');
+  const title = (P.title || '').trim();
+  if (P.midi || P.events.length) {
+    r.hidden = false;
+    r.textContent = 'Tiếp tục: ' + (title || (P.midi ? 'bài MIDI đang mở' : 'bài chưa đặt tên'));
+    r.onclick = () => { location.hash = P.midi && !P.events.length ? '#midi' : '#hop-am'; };
+  } else r.hidden = true;
+}
+{
+  $('#ver-chip').textContent = 'Phiên bản ' + VERSION;
+  $('#home-ver').textContent = 'Có gì mới ở ' + VERSION;
+  $('#home-notes').replaceChildren(...NOTES.map((t) => h('li', { text: t })));
+  $('#foot-ver').textContent = 'v' + VERSION;
+  $('#foot-author').textContent = AUTHOR;
+  $$('[data-go]').forEach((b) => b.addEventListener('click', () => { location.hash = b.dataset.go; }));
+  $('#home-open-midi').addEventListener('click', () => { location.hash = '#midi'; studio.pickFile(); });
+  $('#home-learn').addEventListener('click', () => {
+    location.hash = '#midi';
+    if (studio.hasSong()) studio.openLearn(); else studio.pickFile();
+  });
+}
 
 function renderMidiTab() {
   const t = $('#tab-midi');

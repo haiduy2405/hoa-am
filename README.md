@@ -6,7 +6,7 @@ Chạy hoàn toàn trên trình duyệt, không cần cài gì, không gửi d�
 
 ## Dùng thế nào
 
-1. Mở trang bằng **Chrome hoặc Edge** trên máy tính (Safari và Firefox hỗ trợ Web MIDI hạn chế).
+1. Trang chủ giới thiệu ba khu làm việc: Hợp âm, Nhạc MIDI, Học bài. Mở trang bằng **Chrome hoặc Edge** trên máy tính (Safari và Firefox hỗ trợ Web MIDI hạn chế).
 2. Nối đàn vào máy qua cổng **USB TO HOST**, bật đàn. Cho phép trang dùng MIDI khi trình duyệt hỏi.
 3. Chơi một hợp âm: tên hợp âm hiện to ở giữa, kèm các cách đọc khác và vị trí trong tông.
 4. Bấm **Thêm vào bản hợp âm** (hoặc dấu cộng ở gợi ý) để đưa hợp âm vào ô nhịp.
@@ -81,6 +81,7 @@ Test phủ nhận diện hợp âm, đoán tông, số La Mã, gợi ý, voicing
 | `js/roll.js` | Piano roll bằng canvas |
 | `js/learn.js` | Học bài: nốt rơi, chế độ đợi, theo nhịp, phân tay |
 | `js/midiui.js` | Giao diện phòng nhạc MIDI |
+| `js/version.js` | Số phiên bản và tên tác giả (duyluma) |
 | `js/store.js` | Lưu cài đặt và bản nhạc trên trình duyệt |
 | `js/app.js` | Giao diện và nối các phần lại |
 
