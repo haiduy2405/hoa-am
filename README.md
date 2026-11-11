@@ -47,7 +47,7 @@ Bấm **Học bài này** trong phòng nhạc MIDI. Nốt rơi xuống phím đ�
   - Chữ PERFECT có hiệu ứng riêng: chữ vàng gradient, dải sáng quét qua, tia sáng xoay phía sau, vệt sáng ngang và sao lấp lánh.
   - Hiệu ứng: tia sáng từ phím, vòng sóng, hạt lấp lánh, loé đỏ khi trượt, viền hồng khi Fever. Có thể tắt hiệu ứng ở mục Phân tay.
   - Hết bài hiện hạng S, A, B, C, D, số sao, điểm đếm lên và kỷ lục riêng cho từng bài (theo tay tập và tốc độ), lưu trên trình duyệt.
-  - Đếm ngược có giọng đọc "Three, two, one, go!" bằng giọng tiếng Anh có sẵn của trình duyệt (phát ra loa máy tính, tắt được ở mục Phân tay). Ngoài ra không có âm thanh hiệu ứng nào: mọi tiếng nhạc đều từ đàn của bạn.
+  - Đếm ngược 3, 2, 1 có âm thanh bíp (file `assets/countdown.mp3`) khớp từng số, phát ra loa máy tính, tắt được ở mục Phân tay. Ngoài ra không có âm thanh hiệu ứng nào: mọi tiếng nhạc đều từ đàn của bạn.
 - **Xem:** đàn tự chơi cả bài, bạn nhìn nốt rơi để học trước.
 - Tập **tay phải**, **tay trái** hoặc **hai tay**. Tập tay nào thì tay kia tự chơi nhỏ lại (40%) cho dễ nghe, chỉnh lại được. Mục **Phân tay** cho chọn phần nào là tay nào, hoặc chia một phần piano thành hai tay tại một nốt.
 - Tốc độ và âm lượng đàn tự chơi (tay phải, tay trái, đệm) chọn trong 10 mốc từ 10% đến 100%. Lặp một đoạn theo ô nhịp, kéo thanh để tua, độ dài đường rơi, số phím, toàn màn hình (phím F), Space để dừng và tiếp tục, R về đầu.

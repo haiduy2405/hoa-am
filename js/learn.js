@@ -79,29 +79,23 @@ export function createLearn(env) {
   let gi = 0, ri = 0, ap = 0;
   let stats = newStats();
   const fx = { parts: [], rings: [], beams: [], pop: null, banner: null, comboT: 0, flashT: 0, lastPop: 0, goT: 0, sparks: [] };
-  let shownScore = 0, spoken = 0, voice = null;
+  let shownScore = 0;
 
-  // ---------- Giọng đếm ngược (đọc bằng giọng tiếng Anh của trình duyệt) ----------
-  function pickVoice() {
-    try {
-      const v = window.speechSynthesis.getVoices();
-      voice = v.find((x) => /^en[-_]US/i.test(x.lang) && /google|natural|aria|jenny|samantha|zira|guy/i.test(x.name)) || v.find((x) => /^en/i.test(x.lang)) || null;
-    } catch (e) { voice = null; }
-  }
-  try { window.speechSynthesis.addEventListener('voiceschanged', pickVoice); pickVoice(); } catch (e) { /* trình duyệt không có giọng đọc */ }
-  function say(text) {
+  // ---------- Âm thanh đếm ngược: 4 tiếng bíp cách nhau 1 giây, tiếng đầu ở 0,25 giây ----------
+  const COUNT_LEAD = 3250; // ms thực từ lúc bấm Bắt đầu tới lúc vào bài (khớp tiếng bíp thứ tư)
+  let countAudio = null;
+  function playCount() {
     if (set.voice === false) return;
     try {
-      const ss = window.speechSynthesis;
-      if (!ss) return;
-      ss.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'en-US'; u.rate = 1.1; u.pitch = 1.05; u.volume = 1;
-      if (voice) u.voice = voice;
-      ss.speak(u);
+      if (!countAudio) { countAudio = new Audio('assets/countdown.mp3'); countAudio.preload = 'auto'; }
+      const elapsed = (lead() + pos) / set.speed / 1000; // đã đếm được bao lâu (khi tiếp tục sau tạm dừng)
+      if (elapsed >= 4) return;
+      countAudio.currentTime = Math.max(0, elapsed);
+      const pr = countAudio.play();
+      if (pr && pr.catch) pr.catch(() => {});
     } catch (e) { /* bỏ qua */ }
   }
-  const hush = () => { try { window.speechSynthesis.cancel(); } catch (e) { /* bỏ qua */ } };
+  const hush = () => { try { if (countAudio) countAudio.pause(); } catch (e) { /* bỏ qua */ } };
   const keys = new Map(); // phím người chơi: { col, held, until }
   let open = false, timer = 0, raf = 0, dragging = false, warnedOut = false;
   let loop = { on: false, a: 1, b: 4 };
@@ -177,12 +171,11 @@ export function createLearn(env) {
     while (ap < autoEv.length && autoEv[ap].ms < pos - 1e-6) ap++;
     finished = false;
     waiting = false;
-    spoken = 0;
   }
   const loopMs = () => ({ a: clock.tickToMs(Math.max(0, loop.a - 1) * bb * song.ppq), b: clock.tickToMs(Math.max(loop.a, loop.b) * bb * song.ppq) });
   function clearFx() { fx.parts.length = 0; fx.rings.length = 0; fx.beams.length = 0; fx.pop = null; fx.banner = null; fx.flashT = 0; fx.goT = 0; fx.sparks.length = 0; }
   function resetStats() { stats = newStats(groups.length); shownScore = 0; clearFx(); if (els.result) els.result.hidden = true; }
-  const lead = () => Math.max(600, 3000 * set.speed); // đếm lùi 3, 2, 1 trước khi vào bài
+  const lead = () => Math.max(100, COUNT_LEAD * set.speed); // đếm lùi 3, 2, 1 trước khi vào bài
 
   // ---------- Hiệu ứng và chấm điểm ----------
   const fxOn = () => set.fx !== false;
@@ -286,11 +279,7 @@ export function createLearn(env) {
       if (pos < 0) pos = 0;
       return;
     }
-    if (pos < 0) {
-      const n = Math.ceil(-pos / set.speed / 1000);
-      if (n >= 1 && n <= 3 && n !== spoken) { spoken = n; say(['', 'One', 'Two', 'Three'][n]); }
-    }
-    if (pos < 0 && target >= 0) { fx.goT = now; say('Go!'); }
+    if (pos < 0 && target >= 0) fx.goT = now;
     pos = target;
     if (lm) cap = Math.min(cap, lm.b - 1e-3);
     // Gửi nốt tự chơi trước 40ms để đều nhịp
@@ -387,6 +376,7 @@ export function createLearn(env) {
     running = true;
     last = performance.now();
     renderPlay();
+    if (pos < 0) playCount();
   }
 
   // ---------- Nốt từ đàn của người chơi ----------
@@ -909,7 +899,7 @@ export function createLearn(env) {
       h('label', { class: 'lp-row' }, h('span', { class: 'lp-name', text: 'Số phím' }),
         sel('Số phím', [['auto', 'Vừa với bài'], ['61', '61 phím'], ['88', '88 phím']], () => set.kb, (v) => { set.kb = v; save(); layout(); })),
       h('div', { class: 'lp-row' }, h('span', { class: 'lp-name', text: 'Tên nốt trên nốt rơi' }), tog('Hiện', () => set.names, (v) => { set.names = v; save(); })),
-      h('div', { class: 'lp-row' }, h('span', { class: 'lp-name', text: 'Giọng đếm "Three, two, one, go!"' }), tog('Bật', () => set.voice !== false, (v) => { set.voice = v; save(); if (!v) hush(); })),
+      h('div', { class: 'lp-row' }, h('span', { class: 'lp-name', text: 'Âm thanh đếm ngược' }), tog('Bật', () => set.voice !== false, (v) => { set.voice = v; save(); if (!v) hush(); }, 'Phát ra loa máy tính')),
       h('div', { class: 'lp-row' }, h('span', { class: 'lp-name', text: 'Hiệu ứng lấp lánh' }), tog('Bật', () => set.fx !== false, (v) => { set.fx = v; save(); if (!v) clearFx(); })));
   }
 
