@@ -24,6 +24,7 @@ const rankOf = (acc) => (acc >= 0.95 ? 'S' : acc >= 0.85 ? 'A' : acc >= 0.7 ? 'B
 const RANK_TEXT = { S: 'Xuất sắc!', A: 'Rất tốt!', B: 'Khá tốt', C: 'Cố thêm chút nữa', D: 'Luyện thêm nhé' };
 const SERIF = '"Newsreader", Georgia, serif';
 const SANS = '"Be Vietnam Pro", system-ui, sans-serif';
+const DISPLAY = '"Barlow Condensed", "Be Vietnam Pro", system-ui, sans-serif';
 const PCT = Array.from({ length: 10 }, (_, i) => [(i + 1) / 10, `${(i + 1) * 10}%`]);
 
 const ROLES = [
@@ -35,6 +36,12 @@ const ROLES = [
 ];
 const DEF = { mode: 'wait', hands: 'R', speed: 1, look: 3000, kb: 'auto', names: true, others: true, split: 60, vol: { R: 1, L: 1, B: 1 }, fx: true };
 
+const QUIET = 0.4; // tay không tập tự chơi nhỏ lại để nghe rõ tay đang tập
+function handDefaults(hands, vol) {
+  vol.R = hands === 'L' ? QUIET : 1;
+  vol.L = hands === 'R' ? QUIET : 1;
+}
+
 function loadSet() {
   let o = {};
   try { o = JSON.parse(localStorage.getItem(STORE) || '{}'); } catch (e) { o = {}; }
@@ -42,6 +49,7 @@ function loadSet() {
   const tenth = (v, d) => (Number.isFinite(+v) ? Math.min(1, Math.max(0.1, Math.round(+v * 10) / 10)) : d);
   r.speed = tenth(r.speed, 1);
   for (const k of ['R', 'L', 'B']) r.vol[k] = tenth(r.vol[k], 1);
+  if (!o.vol) handDefaults(r.hands, r.vol);
   return r;
 }
 
@@ -70,7 +78,7 @@ export function createLearn(env) {
   let pos = -LEAD, running = false, waiting = false, finished = false, last = 0;
   let gi = 0, ri = 0, ap = 0;
   let stats = newStats();
-  const fx = { parts: [], rings: [], beams: [], pop: null, banner: null, comboT: 0, flashT: 0, lastPop: 0 };
+  const fx = { parts: [], rings: [], beams: [], pop: null, banner: null, comboT: 0, flashT: 0, lastPop: 0, goT: 0 };
   let shownScore = 0;
   const keys = new Map(); // phím người chơi: { col, held, until }
   let open = false, timer = 0, raf = 0, dragging = false, warnedOut = false;
@@ -149,9 +157,9 @@ export function createLearn(env) {
     waiting = false;
   }
   const loopMs = () => ({ a: clock.tickToMs(Math.max(0, loop.a - 1) * bb * song.ppq), b: clock.tickToMs(Math.max(loop.a, loop.b) * bb * song.ppq) });
-  function clearFx() { fx.parts.length = 0; fx.rings.length = 0; fx.beams.length = 0; fx.pop = null; fx.banner = null; fx.flashT = 0; }
+  function clearFx() { fx.parts.length = 0; fx.rings.length = 0; fx.beams.length = 0; fx.pop = null; fx.banner = null; fx.flashT = 0; fx.goT = 0; }
   function resetStats() { stats = newStats(groups.length); shownScore = 0; clearFx(); if (els.result) els.result.hidden = true; }
-  const lead = () => (set.mode === 'rhythm' ? Math.max(600, 3000 * set.speed) : LEAD);
+  const lead = () => Math.max(600, 3000 * set.speed); // đếm lùi 3, 2, 1 trước khi vào bài
 
   // ---------- Hiệu ứng và chấm điểm ----------
   const fxOn = () => set.fx !== false;
@@ -236,8 +244,10 @@ export function createLearn(env) {
     if (lm && target >= lm.b) {
       if (set.mode === 'rhythm') resetStats();
       seek(lm.a);
+      if (pos < 0) pos = 0;
       return;
     }
+    if (pos < 0 && target >= 0) fx.goT = now;
     pos = target;
     if (lm) cap = Math.min(cap, lm.b - 1e-3);
     // Gửi nốt tự chơi trước 40ms để đều nhịp
@@ -466,25 +476,42 @@ export function createLearn(env) {
     }
     g.globalAlpha = 1;
     g.textAlign = 'center';
-    // đếm lùi 3, 2, 1
-    if (game && running && pos < 0) {
+    // đếm lùi 3, 2, 1 pop up giữa màn hình
+    if (running && pos < 0) {
       const wall = -pos / set.speed / 1000;
       const n = Math.ceil(wall);
       if (n >= 1 && n <= 3) {
-        const frac = wall - Math.floor(wall) || 1;
-        g.save(); g.translate(cw / 2, hitY * 0.42); g.scale(0.85 + 0.35 * frac, 0.85 + 0.35 * frac);
-        g.globalAlpha = Math.min(1, frac * 2.4); g.fillStyle = '#f4efe7'; g.shadowColor = '#e3b35c'; g.shadowBlur = 30;
-        g.font = `300 120px ${SERIF}`; g.textBaseline = 'middle'; g.fillText(String(n), 0, 0); g.restore();
+        const frac = wall - Math.floor(wall) || 1; // 1 → 0 trong mỗi giây
+        const t = 1 - frac; // 0 → 1
+        const size = Math.round(Math.min(300, Math.max(120, chh * 0.42)));
+        const cy = hitY * 0.5;
+        g.fillStyle = 'rgba(10,8,20,0.38)'; g.fillRect(0, 0, cw, hitY);
+        const rk = ease(t);
+        g.globalAlpha = (1 - t) * 0.8; g.strokeStyle = '#f3cf88'; g.lineWidth = 3;
+        g.beginPath(); g.arc(cw / 2, cy, size * (0.42 + 0.6 * rk), 0, Math.PI * 2); g.stroke();
+        const sc = 1 + 0.7 * (1 - ease(t * 5));
+        const a = t > 0.78 ? Math.max(0, 1 - (t - 0.78) / 0.22) : 1;
+        g.save(); g.translate(cw / 2, cy); g.scale(sc, sc); g.globalAlpha = a;
+        g.fillStyle = '#fff7e0'; g.shadowColor = '#e3b35c'; g.shadowBlur = 46; g.textBaseline = 'middle';
+        g.font = `italic 800 ${size}px ${DISPLAY}`; g.fillText(String(n), 0, size * 0.04); g.restore();
+        g.globalAlpha = 1;
       }
+    }
+    if (fx.goT && now - fx.goT < 700) {
+      const age = now - fx.goT, a = age < 420 ? 1 : 1 - (age - 420) / 280;
+      const size = Math.round(Math.min(170, Math.max(80, chh * 0.24)));
+      g.save(); g.translate(cw / 2, hitY * 0.5); g.scale(1 + 0.5 * (1 - ease(age / 160)), 1 + 0.5 * (1 - ease(age / 160))); g.globalAlpha = a;
+      g.fillStyle = '#d9fff3'; g.shadowColor = '#6fc9b3'; g.shadowBlur = 40; g.textBaseline = 'middle';
+      g.font = `italic 800 ${size}px ${DISPLAY}`; g.fillText('BẮT ĐẦU!', 0, 0); g.restore();
     }
     // số chuỗi (combo)
     if (stats.combo >= 3 && set.mode !== 'watch') {
       const sc = 1 + 0.28 * Math.max(0, 1 - (now - fx.comboT) / 170);
-      g.save(); g.translate(cw / 2, hitY * 0.27); g.scale(sc, sc);
+      g.save(); g.translate(cw / 2, hitY * 0.22); g.scale(sc, sc);
       g.textBaseline = 'alphabetic';
       g.fillStyle = 'rgba(244,239,231,0.55)'; g.font = `600 12px ${SANS}`;
-      g.fillText(game && stats.fever ? 'FEVER' : set.mode === 'wait' ? 'CHUỖI' : 'COMBO', 0, -40);
-      g.font = `300 66px ${SERIF}`; g.fillStyle = game && stats.fever ? '#ffc6ea' : '#f4efe7';
+      g.fillText(game && stats.fever ? 'FEVER' : set.mode === 'wait' ? 'CHUỖI' : 'COMBO', 0, -66);
+      g.font = `italic 800 84px ${DISPLAY}`; g.fillStyle = game && stats.fever ? '#ffc6ea' : '#f4efe7';
       g.shadowColor = game && stats.fever ? '#f078c8' : '#e3b35c'; g.shadowBlur = 22;
       g.fillText(String(stats.combo), 0, 14); g.restore();
     }
@@ -494,10 +521,11 @@ export function createLearn(env) {
       if (age < 720) {
         const a = age < 480 ? 1 : 1 - (age - 480) / 240;
         const sc = 1 + 0.45 * (1 - ease(age / 130));
-        g.save(); g.translate(cw / 2, hitY * 0.5); g.scale(sc, sc); g.globalAlpha = a;
+        g.save(); g.translate(cw / 2, hitY * 0.54); g.scale(sc, sc); g.globalAlpha = a;
         g.fillStyle = fx.pop.col; g.shadowColor = fx.pop.col; g.shadowBlur = 18; g.textBaseline = 'middle';
-        g.font = `600 ${fx.pop.text === 'Đúng' ? 26 : 30}px ${SANS}`; g.fillText(fx.pop.text, 0, 0);
-        if (fx.pop.sub) { g.shadowBlur = 0; g.font = `500 13px ${SANS}`; g.globalAlpha = a * 0.75; g.fillText(fx.pop.sub, 0, 26); }
+        const fs = Math.round(Math.min(78, Math.max(46, chh * 0.1)));
+        g.font = `italic 800 ${fs}px ${DISPLAY}`; g.fillText(fx.pop.text, 0, 0);
+        if (fx.pop.sub) { g.shadowBlur = 0; g.font = `italic 600 ${Math.round(fs * 0.34)}px ${DISPLAY}`; g.globalAlpha = a * 0.8; g.fillText(fx.pop.sub.toUpperCase(), 0, fs * 0.62); }
         g.restore();
       }
     }
@@ -509,7 +537,7 @@ export function createLearn(env) {
         const sc = 1.35 - 0.35 * ease(age / 180);
         g.save(); g.translate(cw / 2, hitY * 0.68); g.scale(sc, sc); g.globalAlpha = a;
         g.fillStyle = fx.banner.col; g.shadowColor = fx.banner.col; g.shadowBlur = 28; g.textBaseline = 'middle';
-        g.font = `300 44px ${SERIF}`; g.fillText(fx.banner.text, 0, 0); g.restore();
+        g.font = `italic 800 60px ${DISPLAY}`; g.fillText(fx.banner.text, 0, 0); g.restore();
       }
     }
     g.textAlign = 'start'; g.globalAlpha = 1;
@@ -773,6 +801,7 @@ export function createLearn(env) {
   }
 
   function mount() {
+    els.volSel = {};
     els.root = h('div', { class: 'learn', role: 'dialog', 'aria-label': 'Học bài theo nốt rơi', hidden: true });
     els.title = h('b', { class: 'learn-title' });
     els.full = h('button', { type: 'button', class: 'btn-ghost', text: 'Toàn màn hình', onclick: toggleFull });
@@ -809,13 +838,13 @@ export function createLearn(env) {
           sel('Tốc độ phát', PCT, () => set.speed, (v) => { set.speed = +v; save(); }))),
       h('div', { class: 'learn-row' },
         seg('Chế độ', [['watch', 'Xem'], ['wait', 'Đợi tôi'], ['rhythm', 'Thử thách']], () => set.mode, (v) => { set.mode = v; save(); resetStats(); rebuild(); }),
-        seg('Tay tập', [['R', 'Tay phải'], ['L', 'Tay trái'], ['RL', 'Hai tay']], () => set.hands, (v) => { set.hands = v; save(); resetStats(); rebuild(); }),
+        seg('Tay tập', [['R', 'Tay phải'], ['L', 'Tay trái'], ['RL', 'Hai tay']], () => set.hands, (v) => { set.hands = v; handDefaults(v, set.vol); for (const k of ['R', 'L']) if (els.volSel && els.volSel[k]) els.volSel[k].value = String(set.vol[k]); save(); resetStats(); rebuild(); }),
         tog('Đàn chơi phần còn lại', () => set.others, (v) => { set.others = v; save(); rebuild(); }, 'Bật: đàn tự chơi tay không tập, đệm và trống'),
         loopBtn, els.loopFields),
       h('div', { class: 'learn-row' },
         h('span', { class: 'sb-lbl', text: 'Âm lượng đàn tự chơi:' }),
         ...[['R', 'Tay phải'], ['L', 'Tay trái'], ['B', 'Đệm, trống']].map(([k, t]) => h('label', { class: 'sb-lbl' }, h('span', { text: t }),
-          sel('Âm lượng ' + t, PCT, () => set.vol[k], (v) => { set.vol[k] = +v; save(); })))));
+          (els.volSel[k] = sel('Âm lượng ' + t, PCT, () => set.vol[k], (v) => { set.vol[k] = +v; save(); }))))));
 
     els.canvas = h('canvas', { class: 'learn-canvas', 'aria-label': 'Nốt rơi xuống phím đàn' });
     els.stat = h('span', { class: 'hud-stat' });
@@ -886,6 +915,7 @@ export function createLearn(env) {
     els.root.hidden = false;
     document.body.classList.add('learn-open');
     layout();
+    try { document.fonts.load('italic 800 60px "Barlow Condensed"'); document.fonts.load('italic 600 20px "Barlow Condensed"'); } catch (e) { /* bỏ qua */ }
     els.title.textContent = title || s.title || 'Bài MIDI';
     clock = makeClock(s);
     bb = barBeats(s);

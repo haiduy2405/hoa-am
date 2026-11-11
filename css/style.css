@@ -541,13 +541,13 @@ body.learn-open { overflow: hidden; }
   .cards, .home-grid { grid-template-columns: 1fr; }
 }
 
-.game-hud { position: absolute; right: 14px; top: 12px; width: 190px; display: grid; gap: 6px; padding: 12px 14px 12px; border-radius: 16px; background: rgba(20, 16, 32, 0.72); border: 1px solid var(--line-2); backdrop-filter: blur(8px); pointer-events: none; transition: box-shadow 0.3s, border-color 0.3s; }
+.game-hud { position: absolute; right: 14px; top: 12px; width: 230px; display: grid; gap: 6px; padding: 12px 14px 12px; border-radius: 16px; background: rgba(20, 16, 32, 0.72); border: 1px solid var(--line-2); backdrop-filter: blur(8px); pointer-events: none; transition: box-shadow 0.3s, border-color 0.3s; }
 .game-hud.fever { border-color: rgba(255, 150, 215, 0.7); box-shadow: 0 0 26px rgba(240, 120, 200, 0.35); }
 .g-top { display: flex; justify-content: space-between; align-items: center; }
 .g-lbl { font-size: 12px; color: var(--ink-3); letter-spacing: 0.06em; text-transform: uppercase; }
 .g-mult { font-size: 13px; font-weight: 600; color: #1b1408; background: var(--brass); padding: 1px 9px; border-radius: 999px; }
 .fever .g-mult { background: #ffb4e4; }
-.g-score { font: 300 38px/1 var(--serif); font-feature-settings: 'tnum'; color: var(--ink); }
+.g-score { font: italic 800 62px/0.95 'Barlow Condensed', var(--sans); letter-spacing: 0.01em; font-feature-settings: 'tnum'; color: var(--ink); text-shadow: 0 0 24px rgba(227, 179, 92, 0.35); }
 .g-gauge { position: relative; height: 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.09); overflow: hidden; margin-top: 2px; }
 .g-fill { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 999px; background: linear-gradient(90deg, #6fc9b3, #e3b35c 70%, #f3cf88); }
 .fever .g-fill { background: linear-gradient(90deg, #f078c8, #ffb4e4); }
@@ -568,7 +568,7 @@ body.learn-open { overflow: hidden; }
 .rc-stars { display: flex; gap: 6px; font-size: 26px; color: rgba(255, 255, 255, 0.16); }
 .rc-stars .on { color: #f3cf88; text-shadow: 0 0 14px rgba(243, 207, 136, 0.6); }
 .result-card h3 { font: 400 24px/1.2 var(--serif); margin-top: 2px; }
-.rc-score { font: 300 44px/1.1 var(--serif); font-feature-settings: 'tnum'; }
+.rc-score { font: italic 800 64px/1.05 'Barlow Condensed', var(--sans); font-feature-settings: 'tnum'; }
 .rc-record { font-size: 12.5px; font-weight: 600; color: #1b1408; background: linear-gradient(90deg, #f3cf88, #e3b35c); padding: 3px 12px; border-radius: 999px; }
 .rc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; margin-top: 8px; }
 .rc-cell { display: grid; gap: 2px; padding: 10px 6px; border-radius: 14px; background: rgba(255, 255, 255, 0.045); border: 1px solid var(--line); }
@@ -576,7 +576,7 @@ body.learn-open { overflow: hidden; }
 .rc-cell span { font-size: 12px; color: var(--ink-3); }
 .rc-cell.p b { color: #f3cf88; } .rc-cell.g b { color: #6fc9b3; } .rc-cell.o b { color: #b9a4f0; } .rc-cell.m b { color: var(--madder); }
 .rc-actions { display: flex; gap: 10px; margin-top: 14px; }
-@media (max-width: 760px) { .game-hud { width: 142px; padding: 8px 10px; right: 8px; top: 8px; } .g-score { font-size: 26px; } .rc-grade { font-size: 80px; } .rc-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 760px) { .game-hud { width: 160px; padding: 8px 10px; right: 8px; top: 8px; } .g-score { font-size: 38px; } .rc-grade { font-size: 80px; } .rc-grid { grid-template-columns: repeat(3, 1fr); } }
 @media (prefers-reduced-motion: reduce) { .learn-result, .result-card { animation: none; } }
 @media print {
   :root { --ink: #111; --ink-2: #333; --ink-3: #666; --line: #ccc; --line-2: #999; --brass-2: #555; --brass: #555; --brass-dim: transparent; }
