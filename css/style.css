@@ -541,7 +541,7 @@ body.learn-open { overflow: hidden; }
   .cards, .home-grid { grid-template-columns: 1fr; }
 }
 
-.game-hud { position: absolute; right: 14px; top: 12px; width: 230px; display: grid; gap: 6px; padding: 12px 14px 12px; border-radius: 16px; background: rgba(20, 16, 32, 0.72); border: 1px solid var(--line-2); backdrop-filter: blur(8px); pointer-events: none; transition: box-shadow 0.3s, border-color 0.3s; }
+.game-hud { position: absolute; right: 14px; top: 12px; width: 270px; display: grid; gap: 6px; padding: 12px 14px 12px; border-radius: 16px; background: rgba(20, 16, 32, 0.72); border: 1px solid var(--line-2); backdrop-filter: blur(8px); pointer-events: none; transition: box-shadow 0.3s, border-color 0.3s; }
 .game-hud.fever { border-color: rgba(255, 150, 215, 0.7); box-shadow: 0 0 26px rgba(240, 120, 200, 0.35); }
 .g-top { display: flex; justify-content: space-between; align-items: center; }
 .g-lbl { font-size: 12px; color: var(--ink-3); letter-spacing: 0.06em; text-transform: uppercase; }
@@ -549,7 +549,7 @@ body.learn-open { overflow: hidden; }
 .fever .g-mult { background: #ffb4e4; }
 .g-mult[data-m='2'] { background: #ffd36b; } .g-mult[data-m='3'] { background: #ff9a5c; } .g-mult[data-m='4'] { background: #ff6fb5; color: #2a0c1c; }
 .g-mult { transition: background 0.15s; }
-.g-score { font: italic 800 62px/0.95 'Barlow Condensed', var(--sans); letter-spacing: 0.01em; font-feature-settings: 'tnum'; color: var(--ink); text-shadow: 0 0 24px rgba(227, 179, 92, 0.35); }
+.g-score { font: italic 800 58px/0.95 'Barlow Condensed', var(--sans); letter-spacing: 0.01em; font-feature-settings: 'tnum'; color: var(--ink); text-shadow: 0 0 24px rgba(227, 179, 92, 0.35); }
 .g-gauge { position: relative; height: 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.09); overflow: hidden; margin-top: 2px; }
 .g-fill { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 999px; background: linear-gradient(90deg, #6fc9b3, #e3b35c 70%, #f3cf88); }
 .fever .g-fill { background: linear-gradient(90deg, #f078c8, #ffb4e4); }

@@ -18,6 +18,8 @@ const GRADES = {
   good: { t: 'GOOD', col: '#b9a4f0', pts: 100, acc: 0.65, gauge: 1.5 },
 };
 const FEVER_MS = 8000;
+const PERFECT_STEP = 10; // cứ mỗi ngần này PERFECT liên tiếp thì thưởng một khoản cố định
+const PERFECT_BONUS = 1000;
 const MILESTONES = new Set([10, 25, 50, 100, 150, 200, 300, 500]);
 const newStats = (groups = 0) => ({ hit: 0, miss: 0, wrong: 0, combo: 0, best: 0, groups, score: 0, perfect: 0, great: 0, good: 0, gauge: 0, fever: false, pstreak: 0, pbest: 0, pLast: -1e9 });
 const rankOf = (acc) => (acc >= 0.93 ? 'S' : acc >= 0.82 ? 'A' : acc >= 0.66 ? 'B' : acc >= 0.45 ? 'C' : 'D');
@@ -186,7 +188,7 @@ export function createLearn(env) {
     fx.pop = { text, col, sub, mult, t: now, kind: text === 'PERFECT' ? 'perfect' : '' };
     if (fx.pop.kind && geo && fxOn()) {
       fx.sparks.length = 0;
-      for (let i = 0; i < 9 + Math.max(0, mult - 1) * 5; i++) {
+      for (let i = 0; i < 9 + Math.min(8, Math.max(0, mult - 1)) * 5; i++) {
         const a = Math.random() * Math.PI * 2, r = 70 + Math.random() * 170;
         fx.sparks.push({ dx: Math.cos(a) * r * 1.5, dy: Math.sin(a) * r * 0.55, t0: now + Math.random() * 220, size: 8 + Math.random() * 16, life: 480 + Math.random() * 260 });
       }
@@ -218,24 +220,30 @@ export function createLearn(env) {
     stats.hit++; stats[grade]++;
     stats.combo++;
     if (stats.combo > stats.best) stats.best = stats.combo;
-    // PERFECT liên tiếp thì nhân x2, x3, x4. Một hợp âm nhiều nốt chỉ tính là một nhịp. Không PERFECT thì về 0.
+    // Chuỗi PERFECT không giới hạn. Điểm chỉ nhân tối đa x4, từ đó trở đi chuỗi dài được thưởng khoản cố định mỗi 10 nhịp.
+    // Một hợp âm nhiều nốt chỉ tính là một nhịp. Không PERFECT thì chuỗi về 0.
+    let bonus = 0;
     if (grade === 'perfect') {
-      if (n.ms - stats.pLast >= GAP) stats.pstreak++;
+      if (n.ms - stats.pLast >= GAP) {
+        stats.pstreak++;
+        if (stats.pstreak % PERFECT_STEP === 0) bonus = PERFECT_BONUS;
+      }
       stats.pLast = n.ms;
       stats.pbest = Math.max(stats.pbest, stats.pstreak);
     } else stats.pstreak = 0;
     const pm = Math.min(4, Math.max(1, stats.pstreak));
     const mult = pm * (stats.fever ? 2 : 1);
-    stats.score += G.pts * mult;
+    stats.score += G.pts * mult + bonus;
     if (stats.fever) stats.gauge = Math.min(100, stats.gauge + 2);
     else {
       stats.gauge = Math.min(100, stats.gauge + G.gauge);
       if (stats.gauge >= 100) { stats.fever = true; banner('FEVER ×2', '#ffb4e4'); }
     }
     fx.comboT = now;
-    popup(G.t, G.col, grade === 'perfect' ? '' : d < 0 ? 'Sớm' : 'Trễ', grade === 'perfect' ? pm : 0);
+    popup(G.t, G.col, grade === 'perfect' ? '' : d < 0 ? 'Sớm' : 'Trễ', grade === 'perfect' ? stats.pstreak : 0);
     burst(n.n, n.hand, grade);
-    if (MILESTONES.has(stats.combo)) banner('COMBO ' + stats.combo, '#f3cf88');
+    if (bonus) banner(`PERFECT ×${stats.pstreak}  +${bonus}`, '#fff1b8');
+    else if (MILESTONES.has(stats.combo)) banner('COMBO ' + stats.combo, '#f3cf88');
   }
   function missNote(n) {
     n.res = 'miss';
@@ -344,7 +352,7 @@ export function createLearn(env) {
       game && record ? h('span', { class: 'rc-record', text: 'Kỷ lục mới' }) : null,
       game ? h('div', { class: 'rc-grid' },
         cell('Perfect', stats.perfect, 'p'), cell('Great', stats.great, 'g'), cell('Good', stats.good, 'o'),
-        cell('Miss', stats.miss, 'm'), cell('Chuỗi dài nhất', stats.best), cell('Chính xác', Math.round(acc * 100) + '%'))
+        cell('Miss', stats.miss, 'm'), cell('Perfect liên tiếp', stats.pbest), cell('Chính xác', Math.round(acc * 100) + '%'))
         : h('div', { class: 'rc-grid' }, cell('Nhóm nốt đã qua', `${stats.hit}/${stats.groups}`), cell('Bấm sai', stats.wrong), cell('Chính xác', Math.round(acc * 100) + '%')),
       h('div', { class: 'rc-actions' },
         h('button', { type: 'button', class: 'btn-primary', text: 'Chơi lại', onclick: () => { els.result.hidden = true; seek(0); resetStats(); toggle(); } }),
@@ -564,7 +572,7 @@ export function createLearn(env) {
         if (perfect && fxOn()) {
           // tia sáng xoay chậm phía sau chữ
           const rot = age / 900, rl = fs * 3.2 * ease(age / 260);
-          g.save(); g.rotate(rot); g.globalAlpha = Math.min(1, a * (0.5 + 0.15 * (fx.pop.mult || 1)));
+          g.save(); g.rotate(rot); g.globalAlpha = Math.min(1, a * (0.5 + 0.12 * Math.min(6, fx.pop.mult || 1)));
           for (let i = 0; i < 12; i++) {
             g.rotate(Math.PI / 6);
             const gr = g.createLinearGradient(0, 0, rl, 0);
@@ -602,10 +610,10 @@ export function createLearn(env) {
         g.textAlign = 'center';
         if (perfect && fx.pop.mult >= 2) {
           const m = fx.pop.mult;
-          const col = ['', '', '#ffd36b', '#ff9a5c', '#ff6fb5'][m];
+          const col = m >= 10 ? `hsl(${Math.round(now / 5) % 360},95%,72%)` : m >= 5 ? '#c78bff' : ['', '', '#ffd36b', '#ff9a5c', '#ff6fb5'][m];
           const k = ease(age / 200);
-          g.save(); g.translate(0, fs * 0.86); g.scale(1 + 0.8 * (1 - k) + (m - 2) * 0.12, 1 + 0.8 * (1 - k) + (m - 2) * 0.12);
-          g.fillStyle = col; g.shadowColor = col; g.shadowBlur = 20 + m * 6;
+          g.save(); g.translate(0, fs * 0.86); g.scale(1 + 0.8 * (1 - k) + Math.min(6, m - 2) * 0.1, 1 + 0.8 * (1 - k) + Math.min(6, m - 2) * 0.1);
+          g.fillStyle = col; g.shadowColor = col; g.shadowBlur = 20 + Math.min(8, m) * 6;
           g.lineWidth = 3; g.strokeStyle = 'rgba(60,20,10,0.55)'; g.lineJoin = 'round';
           g.font = `italic 800 ${Math.round(fs * 0.7)}px ${DISPLAY}`;
           g.strokeText('×' + m, 0, 0); g.fillText('×' + m, 0, 0);
@@ -839,6 +847,7 @@ export function createLearn(env) {
       const pm = Math.min(4, Math.max(1, stats.pstreak));
       els.multEl.textContent = '×' + pm * (stats.fever ? 2 : 1);
       els.multEl.dataset.m = String(pm);
+      els.pstrEl.textContent = stats.pstreak >= 2 ? String(stats.pstreak) : '–';
       const judged = stats.hit + stats.miss;
       els.accEl.textContent = judged ? Math.round(((stats.perfect + stats.great * GRADES.great.acc + stats.good * GRADES.good.acc) / judged) * 100) + '%' : '100%';
       els.gaugeFill.style.width = stats.gauge.toFixed(1) + '%';
@@ -962,11 +971,13 @@ export function createLearn(env) {
     els.multEl = h('span', { class: 'g-mult', text: '×1' });
     els.accEl = h('span', { class: 'g-acc', text: '100%' });
     els.bestEl = h('span', { class: 'g-best' });
+    els.pstrEl = h('span', { class: 'g-acc', text: '–' });
     els.gaugeFill = h('i', { class: 'g-fill' });
     els.game = h('div', { class: 'game-hud', hidden: true },
       h('div', { class: 'g-top' }, h('span', { class: 'g-lbl', text: 'Điểm' }), els.multEl),
       els.scoreEl,
       h('div', { class: 'g-gauge', title: 'Đầy thanh là vào Fever: điểm nhân đôi' }, els.gaugeFill, h('span', { class: 'g-gauge-lbl', text: 'FEVER' })),
+      h('div', { class: 'g-foot' }, h('span', { text: 'Perfect liên tiếp' }), els.pstrEl),
       h('div', { class: 'g-foot' }, h('span', { text: 'Chính xác' }), els.accEl),
       els.bestEl);
     els.result = h('div', { class: 'learn-result', hidden: true });
