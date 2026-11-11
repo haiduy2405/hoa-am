@@ -11,15 +11,8 @@ export const DEFAULTS = {
   ghost: true,
   pedal: false,
   roman: true,
-  quant: '1',
-  countIn: true,
-  metro: true,
-  loop: false,
-  output: 'browser', // browser | midi
-  volume: 0.7,
   keys: 61,
   octave: 'yamaha', // yamaha: phím giữa là C3 | intl: phím giữa là C4
-  qwerty: true,
   perRow: 4,
 };
 

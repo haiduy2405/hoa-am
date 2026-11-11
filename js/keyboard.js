@@ -1,4 +1,4 @@
-// Phím đàn vẽ bằng DOM: bấm được bằng chuột/cảm ứng, sáng theo nốt đang giữ.
+// Phím đàn vẽ bằng DOM, chỉ để nhìn: sáng theo nốt bạn đang chơi trên đàn thật.
 
 const BLACK = new Set([1, 3, 6, 8, 10]);
 
@@ -8,7 +8,7 @@ export function rangeFor(count) {
   return [36, 96];
 }
 
-export function buildKeyboard(root, { lo, hi, onDown, onUp, label }) {
+export function buildKeyboard(root, { lo, hi, label }) {
   root.textContent = '';
   const whites = [];
   for (let n = lo; n <= hi; n++) if (!BLACK.has(n % 12)) whites.push(n);
@@ -41,36 +41,6 @@ export function buildKeyboard(root, { lo, hi, onDown, onUp, label }) {
     wrap.appendChild(el);
   }
   root.appendChild(wrap);
-
-  let down = null;
-  const noteAt = (e) => {
-    const t = document.elementFromPoint(e.clientX, e.clientY);
-    const k = t && t.closest && t.closest('.key');
-    return k && wrap.contains(k) ? +k.dataset.note : null;
-  };
-  wrap.addEventListener('pointerdown', (e) => {
-    const n = noteAt(e);
-    if (n == null) return;
-    e.preventDefault();
-    down = n;
-    wrap.setPointerCapture(e.pointerId);
-    onDown(n);
-  });
-  wrap.addEventListener('pointermove', (e) => {
-    if (down == null) return;
-    const n = noteAt(e);
-    if (n != null && n !== down) {
-      onUp(down);
-      down = n;
-      onDown(n);
-    }
-  });
-  const end = () => {
-    if (down != null) onUp(down);
-    down = null;
-  };
-  wrap.addEventListener('pointerup', end);
-  wrap.addEventListener('pointercancel', end);
 
   return {
     set(pressed, rootNote, bassNote) {

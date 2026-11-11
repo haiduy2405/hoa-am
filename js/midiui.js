@@ -1,6 +1,6 @@
 // Phòng nhạc MIDI: mở file .mid, nghe, sửa nốt trên piano roll, lấy hợp âm, xuất lại thành bài của mình.
 import {
-  GM, barBeats, extractChords, freeChannel, kindFor, newSong, parseMidi, partFromChords, quantizeNotes, scaleTempo,
+  GM, barBeats, extractChords, freeChannel, newSong, parseMidi, partFromChords, quantizeNotes, scaleTempo,
   serializeSong, makeSong, transposeNotes, writeMidi,
 } from './songmidi.js';
 import { Player } from './player.js';
@@ -15,7 +15,7 @@ const GRIDS = [
 ];
 
 export function createStudio(env) {
-  const { h, S, hub, synth } = env;
+  const { h, hub } = env;
   const root = env.root;
   let song = null;
   let ai = 0;
@@ -35,8 +35,7 @@ export function createStudio(env) {
   const els = {};
 
   const player = new Player({
-    synth, hub,
-    getOutput: () => S.output,
+    hub,
     getMix: () => ({ mute: mix.mute, solo: mix.solo.size ? mix.solo : null, vol: mix.vol }),
     onEnd: () => { renderBar(); stopLoop(); roll && roll.draw(); },
   });
@@ -95,6 +94,11 @@ export function createStudio(env) {
   };
   function startPlay() {
     if (!song) return;
+    if (!hub.activeOutput) {
+      env.toast('Chưa nối đàn. Bấm Kết nối đàn, chọn cổng MIDI ra là đàn của bạn, rồi phát lại.');
+      env.openDevice();
+      return;
+    }
     env.stopOther();
     player.start(song, cursor ?? 0, { loop });
     startLoop();
@@ -121,31 +125,30 @@ export function createStudio(env) {
   }
   function stopLoop() { cancelAnimationFrame(raf); raf = 0; }
 
+  let warnedNoOut = false;
   function audition(part, pitch) {
     if (pitch < 0 || pitch > 127) return;
-    if (S.output === 'midi' && hub.activeOutput) {
-      const ch = part.channel & 15;
-      if (part.channel !== 9) hub.send([0xc0 | ch, part.program & 127]);
-      hub.send([0x90 | ch, pitch, 90]);
-      hub.send([0x80 | ch, pitch, 0], performance.now() + 280);
+    if (!hub.activeOutput) {
+      if (!warnedNoOut) { warnedNoOut = true; env.toast('Nối đàn để nghe từng nốt khi bạn bấm hoặc kéo.'); }
       return;
     }
-    const t = performance.now() + 10;
-    if (part.channel === 9) synth.drum(pitch, 100, t, 1);
-    else synth.playNote(kindFor(part.program, part.channel), pitch, 90, t, 280, mix.vol.get(part.id) ?? 1);
+    const ch = part.channel & 15;
+    if (part.channel !== 9) hub.send([0xc0 | ch, part.program & 127]);
+    hub.send([0x90 | ch, pitch, 90]);
+    hub.send([0x80 | ch, pitch, 0], performance.now() + 280);
   }
 
   // ---------- Dựng giao diện ----------
-  const btn = (text, onclick, cls = 'btn-quiet small', extra = {}) => h('button', { type: 'button', class: cls, onclick, text, ...extra });
+  const btn = (text, onclick, cls = 'btn-ghost small', extra = {}) => h('button', { type: 'button', class: cls, onclick, text, ...extra });
 
   function build() {
     root.replaceChildren();
     els.empty = h('div', { class: 'studio-empty' },
-      h('p', { class: 'studio-lead', text: 'Nghe một bài MIDI, sửa từng nốt, rồi biến nó thành bài của bạn.' }),
-      h('p', { class: 'hint', text: 'Kéo thả file .mid vào bất kỳ đâu trên trang, hoặc chọn từ máy. Mọi thứ chạy trong trình duyệt, file không gửi đi đâu.' }),
+      h('p', { class: 'studio-lead', text: 'Mở một bài MIDI, nghe bằng đàn của bạn, sửa từng nốt rồi biến nó thành bài của mình.' }),
+      h('p', { class: 'hint', text: 'Kéo thả file .mid vào bất kỳ đâu trên trang, hoặc chọn từ máy. Bài được phát qua cổng MIDI của đàn, nên hãy nối đàn trước. File không gửi đi đâu.' }),
       h('div', { class: 'studio-empty-actions' },
         btn('Mở file MIDI', pickFile, 'btn-primary'),
-        btn('Bắt đầu từ bài trống', () => env.adopt(newSong({ bpm: env.getP().bpm, num: env.getP().beats }), 'Bài mới'), 'btn-quiet')));
+        btn('Bắt đầu từ bài trống', () => env.adopt(newSong({ bpm: env.getP().bpm, num: env.getP().beats }), 'Bài mới'), 'btn-ghost')));
 
     els.view = h('div', { class: 'studio-view', hidden: true });
     els.head = h('div', { class: 'studio-head' });
@@ -171,6 +174,12 @@ export function createStudio(env) {
       selChanged: () => { renderBar(); },
     });
     root.addEventListener('pointerdown', () => { focused = true; }, true);
+    root.addEventListener('keydown', (e) => {
+      const t = e.target;
+      const typing = t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA');
+      if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'f') { e.preventDefault(); toggleFull(); }
+      if (e.key === 'Escape' && els.view.classList.contains('css-full')) toggleFull();
+    });
     document.addEventListener('pointerdown', (e) => { if (!root.contains(e.target)) focused = false; }, true);
   }
 
@@ -180,9 +189,12 @@ export function createStudio(env) {
         h('b', { text: song.title || fileName || 'Bài MIDI' }),
         h('span', { text: `${song.parts.length} phần, ${song.parts.reduce((a, p) => a + p.notes.length, 0).toLocaleString('vi-VN')} nốt` })),
       h('div', { class: 'studio-head-actions' },
-        btn('Mở file khác', pickFile),
-        btn('Tải file .mid', exportMid, 'btn-primary small'),
-        btn('Gỡ khỏi bài này', removeSong, 'btn-quiet small danger')));
+        els.out = h('button', { type: 'button', class: 'out-chip', onclick: () => env.openDevice() }),
+        btn('Mở file khác', pickFile, 'btn-ghost'),
+        btn('Gỡ khỏi bài này', removeSong, 'btn-ghost danger'),
+        btn('Toàn màn hình', toggleFull, 'btn-ghost', { id: 'btn-full', title: 'Phím tắt: F' }),
+        btn('Tải file .mid', exportMid, 'btn-primary')));
+    renderOut();
   }
 
   function renderBar() {
@@ -202,19 +214,12 @@ export function createStudio(env) {
     els.time = h('output', { class: 'studio-time', 'aria-label': 'Vị trí: ô nhịp.phách', text: tickText(playing ? player.tick() : cursor ?? 0) });
     const gridSel = h('select', { 'aria-label': 'Độ chia lưới' }, GRIDS.map(([v, l]) => h('option', { value: v, text: l, selected: Math.abs(+v - gridBeats) < 1e-6 })));
     gridSel.addEventListener('change', () => { gridBeats = +gridSel.value; roll.draw(); });
-    const outBtn = h('button', { type: 'button', class: 'toggle', 'aria-pressed': String(S.output === 'midi'), title: 'Phát bằng âm thanh thật của đàn qua cổng MIDI out', onclick: () => {
-      if (S.output !== 'midi' && !hub.activeOutput) { env.toast('Chưa nối đàn. Bấm Kết nối đàn ở trên cùng để chọn cổng MIDI out.'); return; }
-      S.output = S.output === 'midi' ? 'browser' : 'midi';
-      env.saveS();
-      stopPlay();
-      renderBar();
-    } }, 'Phát qua đàn');
     const loopBtn = h('button', { type: 'button', class: 'toggle', 'aria-pressed': String(loop), onclick: () => { loop = !loop; renderBar(); if (player.active) player.loop = loop; } }, 'Lặp');
     const toolBtn = (id, label) => h('button', { type: 'button', class: 'toggle', 'aria-pressed': String(tool === id), onclick: () => { tool = id; renderBar(); } }, label);
     const shiftBtn = (label, d, whole) => h('button', { type: 'button', class: 'step wide', 'aria-label': label, title: label, onclick: () => transpose(d, whole) }, d > 0 ? '+' + Math.abs(d) : '−' + Math.abs(d));
     els.bar.replaceChildren(
       h('div', { class: 'sb-group' }, play, els.time,
-        btn('Về đầu', () => { cursor = 0; if (player.active) player.setFrom(0); roll.x0 = 0; renderBar(); roll.draw(); }, 'btn-quiet small'), loopBtn, outBtn),
+        btn('Về đầu', () => { cursor = 0; if (player.active) player.setFrom(0); roll.x0 = 0; renderBar(); roll.draw(); }, 'btn-ghost small'), loopBtn),
       h('div', { class: 'sb-group' },
         h('label', { class: 'bpm' }, num('midi-bpm', bpm, 20, 300, 'Tempo', setTempo), h('span', { text: 'BPM' })),
         song.tempos.length > 1 ? h('span', { class: 'hint', text: 'Bài có nhiều tempo, đổi sẽ co giãn đều' }) : null),
@@ -224,13 +229,13 @@ export function createStudio(env) {
         btn('Làm tròn nhịp', quantize),
         h('button', { type: 'button', class: 'toggle small', 'aria-pressed': String(quantEnds), title: 'Làm tròn cả độ dài nốt', onclick: () => { quantEnds = !quantEnds; renderBar(); } }, 'cả độ dài'),
         h('span', { class: 'sb-lbl', text: 'Cao độ' }), shiftBtn('Hạ một quãng tám', -12), shiftBtn('Hạ nửa cung', -1), shiftBtn('Nâng nửa cung', 1), shiftBtn('Nâng một quãng tám', 12),
-        btn('Xóa', () => roll.del(), 'btn-quiet small danger', { disabled: nSel ? null : true })),
+        btn('Xóa', () => roll.del(), 'btn-ghost small danger', { disabled: nSel ? null : true })),
       h('div', { class: 'sb-group' },
         h('span', { class: 'sb-lbl', text: 'Cả bài:' }),
         h('button', { type: 'button', class: 'step wide', 'aria-label': 'Hạ cả bài nửa cung', onclick: () => transpose(-1, true) }, '−1'),
         h('button', { type: 'button', class: 'step wide', 'aria-label': 'Nâng cả bài nửa cung', onclick: () => transpose(1, true) }, '+1'),
-        btn('Hoàn tác', () => { doUndo(); }, 'btn-quiet small', { disabled: undo.length ? null : true }),
-        btn('Làm lại', () => { doRedo(); }, 'btn-quiet small', { disabled: redo.length ? null : true })));
+        btn('Hoàn tác', () => { doUndo(); }, 'btn-ghost small', { disabled: undo.length ? null : true }),
+        btn('Làm lại', () => { doRedo(); }, 'btn-ghost small', { disabled: redo.length ? null : true })));
   }
 
   function renderParts() {
@@ -245,7 +250,7 @@ export function createStudio(env) {
         prog.addEventListener('change', () => { begin(); p.program = +prog.value; changed(); });
       }
       const vol = h('input', { type: 'range', min: 0, max: 150, value: Math.round((mix.vol.get(p.id) ?? 1) * 100), 'aria-label': 'Âm lượng phần này', class: 'pvol' });
-      vol.addEventListener('input', () => mix.vol.set(p.id, vol.value / 100));
+      vol.addEventListener('input', () => { mix.vol.set(p.id, vol.value / 100); if (player.active) player.volume(p, vol.value / 100); });
       const ms = (key, label, title) => h('button', {
         type: 'button', class: 'ms', 'aria-pressed': String(mix[key].has(p.id)), title, 'aria-label': title,
         onclick: (e) => { e.stopPropagation(); mix[key].has(p.id) ? mix[key].delete(p.id) : mix[key].add(p.id); renderParts(); },
@@ -279,7 +284,7 @@ export function createStudio(env) {
       h('div', { class: 'foot-block' },
         h('b', { text: 'Từ hợp âm sang MIDI' }),
         h('span', { text: 'Biến bản hợp âm của bạn thành một phần đệm mới trong bài này.' }),
-        btn('Thêm phần hợp âm', addChordPart, 'btn-quiet small')),
+        btn('Thêm phần hợp âm', addChordPart, 'btn-ghost small')),
       h('p', { class: 'hint foot-hint', text: 'Phím tắt trong piano roll: Ctrl+A chọn hết, Ctrl+C và Ctrl+V chép, Ctrl+D nhân đôi, phím mũi tên dịch nốt, Shift+mũi tên lên xuống đổi một quãng tám, Delete xóa. Bấm lên thước để đặt chỗ bắt đầu phát.' }));
   }
 
@@ -291,6 +296,39 @@ export function createStudio(env) {
     renderHead(); renderBar(); renderParts(); renderFoot();
     requestAnimationFrame(() => { roll.resize(); });
   }
+
+  // ---------- Trạng thái đàn và toàn màn hình ----------
+  function renderOut() {
+    if (!els.out) return;
+    const o = hub.activeOutput;
+    els.out.classList.toggle('ok', !!o);
+    els.out.textContent = o ? 'Phát qua: ' + (o.name || 'đàn') : 'Chưa nối đàn';
+    els.out.title = o ? 'Bài sẽ phát ra loa của đàn. Bấm để đổi cổng.' : 'Cần nối đàn để nghe. Bấm để kết nối.';
+  }
+  const isFull = () => document.fullscreenElement === els.view || els.view.classList.contains('css-full');
+  function setFullUi() {
+    const on = isFull();
+    els.view.classList.toggle('is-full', on);
+    const b = document.getElementById('btn-full');
+    if (b) b.textContent = on ? 'Thoát toàn màn hình' : 'Toàn màn hình';
+    requestAnimationFrame(() => { roll && roll.resize(); });
+  }
+  async function toggleFull() {
+    if (!song) return;
+    if (isFull()) {
+      if (document.fullscreenElement) await document.exitFullscreen().catch(() => {});
+      els.view.classList.remove('css-full');
+      setFullUi();
+      return;
+    }
+    try {
+      await els.view.requestFullscreen();
+    } catch (e) {
+      els.view.classList.add('css-full'); // trình duyệt không cho: phóng to trong trang
+    }
+    setFullUi();
+  }
+  document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) els.view.classList.remove('css-full'); setFullUi(); });
 
   // ---------- Thao tác ----------
   function targetNotes() {
@@ -457,7 +495,8 @@ export function createStudio(env) {
   renderAll();
 
   return {
-    show, pickFile, openFile, togglePlay, stop: stopPlay,
+    show, pickFile, openFile, togglePlay, stop: stopPlay, refreshDevice: renderOut, toggleFull, isFull: () => !!song && isFull(),
+    fullEl: () => els.view,
     isPlaying: () => player.active,
     isFocused: () => focused && !!song,
     hasSong: () => !!song,

@@ -2,9 +2,8 @@ import {
   detect, chordParts, chordText, chordKey, sameChord, transposeChord, parseChord, detectKey, keyName, keySpelling, autoFlat,
   roman, inKey, suggestNext, voiceChord, noteName, QUICK_TYPES, TYPES,
 } from './engine.js';
-import { barChords, chordAtBeat, newProject, sortedEvents, totalBars, uid, weightedChords } from './model.js';
+import { barChords, newProject, sortedEvents, totalBars, uid, weightedChords } from './model.js';
 import { MidiHub } from './midi.js';
-import { Synth } from './audio.js';
 import { buildKeyboard, rangeFor } from './keyboard.js';
 import { buildMidi, download, projectToText, slug } from './export.js';
 import { barBeats, extractChords, newSong, songEnd } from './songmidi.js';
@@ -14,6 +13,7 @@ import { DEFAULTS, deleteProject, loadCurrent, loadLibrary, loadSettings, normal
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const mod12 = (n) => ((n % 12) + 12) % 12;
+const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
 
 function h(tag, props = {}, ...kids) {
   const e = document.createElement(tag);
@@ -32,25 +32,19 @@ function h(tag, props = {}, ...kids) {
 const S = loadSettings();
 let P = normalizeProject(loadCurrent() || newProject());
 const hub = new MidiHub();
-const synth = new Synth();
-synth.setVolume(S.volume);
 
-const live = {
-  held: new Map(), sustained: new Set(), pedal: false, result: null, chord: null, ghost: false, prevCount: 0,
-  altIdx: 0, timer: 0, pend: null, pendTimer: 0, everPlayed: false,
-};
-const clock = { mode: 'idle', timer: 0, startPerf: 0, beat0: 0, nextClick: 0, items: [], ptr: 0, from: 0, end: 0, t0: 0, raf: 0, lastRow: -1 };
+const live = { held: new Map(), sustained: new Set(), pedal: false, result: null, chord: null, ghost: false, prevCount: 0, altIdx: 0, timer: 0 };
 let selId = null;
 let keyCache = null;
 let kbd = null;
 let barEls = [];
+let studio = null;
 const undoStack = [];
 const redoStack = [];
 
 const saveSettingsSoon = () => saveSettings(S);
 let saveTimer = 0;
 let saveWarned = false;
-let studio = null;
 function save() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
@@ -75,7 +69,6 @@ function activeKey() {
   return { tonic: keyCache.tonic, mode: keyCache.mode, auto: true, confidence: keyCache.confidence, alt: keyCache.alt };
 }
 
-// chord đã ở cao độ hiển thị
 function flatFor(chordShown, shift) {
   if (S.flatPref === 'flat') return true;
   if (S.flatPref === 'sharp') return false;
@@ -94,7 +87,6 @@ const textSheet = (c) => {
   return p.root + p.suffix + (p.bass ? '/' + p.bass : '');
 };
 
-// 'm' (thứ) nằm ngang cạnh chữ gốc; phần mở rộng (7, maj7, sus4...) nâng lên thành chỉ số trên.
 const splitSuffix = (sfx) => (/^m(?!aj)/.test(sfx) ? ['m', sfx.slice(1)] : ['', sfx]);
 
 function chordNode(parts, cls = '') {
@@ -116,54 +108,46 @@ function romanNode(r) {
 
 // Yamaha gọi phím giữa (MIDI 60) là C3, chuẩn quốc tế gọi là C4.
 const octOf = (n) => Math.floor(n / 12) - (S.octave === 'intl' ? 1 : 2);
-
 function noteLabel(n, flat) {
   return noteName(n % 12, { flat, solfege: S.solfege }) + octOf(n);
 }
 
-// ======================= Phát ra âm thanh =======================
-function outNote(on, n, vel, ts) {
-  if (S.output === 'midi' && hub.activeOutput) on ? hub.noteOn(n, vel, 1, ts) : hub.noteOff(n, 1, ts);
-  else on ? synth.noteOn(n, vel, ts) : synth.noteOff(n, ts);
-}
-
-function panicOut() {
-  synth.panic();
-  if (hub.activeOutput) hub.allOff(1);
-}
-
-function audition(chord, ms = 1100) {
-  const notes = voiceChord(chord);
-  const t = performance.now() + 20;
-  notes.forEach((n) => {
-    outNote(true, n, 84, t);
-    outNote(false, n, 0, t + ms);
-  });
-}
-
-// ======================= Toast =======================
+// ======================= Thông báo =======================
 let toastTimer = 0;
 function toast(msg) {
   const t = $('#toast');
+  // Khi một phần đang toàn màn hình, chỉ phần đó được hiển thị, nên thông báo phải nằm trong nó.
+  const host = document.fullscreenElement || ($('.css-full') ?? document.body);
+  if (t.parentElement !== host) host.append(t);
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// ======================= Nghe thử qua đàn =======================
+let warnedNoOut = false;
+function audition(chord, ms = 1100) {
+  if (!hub.activeOutput) {
+    if (!warnedNoOut) { warnedNoOut = true; toast('Nối đàn để nghe thử. Hòa Âm không phát tiếng bằng loa máy tính.'); }
+    return;
+  }
+  const notes = voiceChord(chord);
+  const t = performance.now() + 20;
+  notes.forEach((n) => {
+    hub.noteOn(n, 84, 1, t);
+    hub.noteOff(n, 1, t + ms);
+  });
 }
 
 // ======================= Nhận nốt =======================
 const pipHit = new Map();
 function flashPip(ch) {
-  const i = $$('#pips i')[ch - 1];
-  if (i) {
-    i.classList.add('hit');
-    clearTimeout(pipHit.get(ch));
-    pipHit.set(ch, setTimeout(() => i.classList.remove('hit'), 220));
-  }
-  const b = $(`#dlg-channels-body [data-ch="${ch}"]`);
+  const b = $(`#dlg-device-body [data-ch="${ch}"]`);
   if (b) {
     b.classList.add('hit');
-    setTimeout(() => b.classList.remove('hit'), 220);
+    clearTimeout(pipHit.get(ch));
+    pipHit.set(ch, setTimeout(() => b.classList.remove('hit'), 220));
   }
 }
 
@@ -173,28 +157,12 @@ function onMidiNote({ on, note, vel, ch }) {
   if (on) {
     live.held.set(note, { vel, ch });
     live.sustained.delete(note);
-    live.everPlayed = true;
     scheduleAnalyze(35);
   } else {
     if (live.pedal && S.pedal) live.sustained.add(note);
     else live.held.delete(note);
     scheduleAnalyze(90);
   }
-}
-
-function virtualOn(n) {
-  if (live.held.has(n)) return;
-  live.held.set(n, { vel: 88, ch: 1, virtual: true });
-  live.everPlayed = true;
-  outNote(true, n, 88);
-  scheduleAnalyze(25);
-}
-function virtualOff(n) {
-  const v = live.held.get(n);
-  if (!v || !v.virtual) return;
-  live.held.delete(n);
-  outNote(false, n, 0);
-  scheduleAnalyze(70);
 }
 
 function scheduleAnalyze(delay) {
@@ -223,7 +191,7 @@ function analyze() {
   live.prevCount = notes.length;
   const res = detect(notes, { level: S.level });
   if (shrinking && live.chord && res.kind !== 'chord' && res.kind !== 'power') {
-    renderLive(); // đang nhả dần các ngón, giữ nguyên hợp âm vừa nhận
+    renderLive();
     return;
   }
   live.ghost = false;
@@ -232,7 +200,6 @@ function analyze() {
   live.chord = res.candidates[0] || null;
   renderLive();
   renderSuggest();
-  considerRecord();
 }
 
 function currentChord() {
@@ -245,7 +212,7 @@ function currentChord() {
 function deviceHint() {
   if (hub.status === 'unsupported') return 'Trình duyệt này chưa hỗ trợ MIDI. Hãy mở bằng Chrome hoặc Edge.';
   if (hub.status === 'denied') return 'Trình duyệt đang chặn MIDI. Cấp quyền cho trang này rồi tải lại.';
-  if (hub.status === 'ready' && !hub.activeInput) return 'Chưa thấy đàn. Cắm USB, bấm Kết nối đàn, hoặc chơi thử trên phím bên dưới.';
+  if (hub.status === 'ready' && !hub.activeInput) return 'Chưa thấy đàn. Cắm USB, bật đàn rồi bấm Kết nối đàn ở góc trên.';
   return null;
 }
 
@@ -254,7 +221,6 @@ function renderLive() {
   const r = live.result;
   const c = currentChord();
   const flat = c ? flatFor(c, 0) : false;
-  let sig;
   const build = () => {
     const wrap = h('span', { class: 'swap' });
     if (c) {
@@ -276,12 +242,12 @@ function renderLive() {
     else {
       const hint = deviceHint();
       if (hint) q.append(hint);
-      else q.append('Chơi một hợp âm, tên nó hiện ', h('em', { text: 'ở đây' }), '.');
+      else q.append('Chơi một hợp âm trên đàn, tên nó hiện ', h('em', { text: 'ở đây' }), '.');
     }
     wrap.append(q);
     return wrap;
   };
-  sig = c ? chordKey(c) : r ? r.kind + (r.kind === 'single' ? r.notes[0] : '') : 'idle' + (deviceHint() || '');
+  const sig = c ? chordKey(c) : r ? r.kind + (r.kind === 'single' ? r.notes[0] : '') : 'idle' + (deviceHint() || '');
   if (box.dataset.sig !== sig) {
     box.dataset.sig = sig;
     box.replaceChildren(build());
@@ -289,15 +255,13 @@ function renderLive() {
   box.classList.toggle('ghost', live.ghost);
   paintKeyboard();
 
-  // Dòng nốt
   const ro = $('#notes-readout');
   if (r && r.notes.length && !live.ghost) ro.textContent = r.notes.map((n) => noteLabel(n, flat)).join('  ');
   else if (live.ghost && r) ro.textContent = 'Hợp âm vừa chơi, đang giữ lại';
   else ro.textContent = '';
-  $('#btn-notes-mode').textContent = S.solfege ? 'Đang gọi nốt: Đô Rê Mi' : 'Đang gọi nốt: C D E';
+  $('#btn-notes-mode').textContent = S.solfege ? 'Gọi nốt: Đô Rê Mi' : 'Gọi nốt: C D E';
   $('#btn-capture').disabled = !c;
 
-  // Cách đọc khác
   const list = $('#alt-list');
   list.replaceChildren();
   if (!r || !r.candidates.length) {
@@ -311,7 +275,7 @@ function renderLive() {
         h('li', {},
           h('button', {
             type: 'button', 'aria-current': i === live.altIdx ? 'true' : 'false', title: 'Dùng cách đọc này',
-            onclick: () => { live.altIdx = i; live.ghost = false; renderLive(); renderSuggest(); considerRecord(true); },
+            onclick: () => { live.altIdx = i; live.ghost = false; renderLive(); renderSuggest(); },
           },
           chordNode(p, 'alt-chord'),
           h('span', { class: 'alt-bar' }, h('i', { style: `width:${pct}%` })))),
@@ -327,7 +291,7 @@ function renderAnalysis() {
   const c = currentChord() || (live.ghost ? live.chord : null);
   const k = activeKey();
   if (!k) {
-    box.append(h('p', { class: 'empty-line', text: 'Chưa biết tông. Ghi vài hợp âm hoặc chọn tông ở bản nhạc bên dưới.' }));
+    box.append(h('p', { class: 'empty-line', text: 'Chưa biết tông. Thêm vài hợp âm vào bản nhạc hoặc chọn tông thủ công.' }));
     return;
   }
   if (!c) {
@@ -350,7 +314,7 @@ function renderSuggest() {
   box.replaceChildren();
   const k = activeKey();
   if (!k) {
-    hint.textContent = 'Ghi hoặc thêm vài hợp âm, Hòa Âm sẽ đoán tông rồi gợi ý bước kế tiếp.';
+    hint.textContent = 'Thêm vài hợp âm, Hòa Âm sẽ đoán tông rồi gợi ý bước kế tiếp.';
     return;
   }
   const evs = sortedEvents(P);
@@ -361,7 +325,7 @@ function renderSuggest() {
     return;
   }
   const lastTxt = last ? textSheetRaw(last) : null;
-  hint.textContent = `${lastTxt ? 'Sau ' + lastTxt + ', t' : 'T'}rong tông ${keyName(k)}. Bấm để nghe, bấm dấu cộng để thêm vào bản nhạc.`;
+  hint.textContent = `${lastTxt ? 'Sau ' + lastTxt + ', t' : 'T'}rong tông ${keyName(k)}. Bấm để nghe qua đàn, bấm dấu cộng để thêm vào bản nhạc.`;
   for (const s of list) {
     const p = partsLive(s.chord);
     box.append(
@@ -486,7 +450,7 @@ function renderSheet() {
   for (let r = 0; r < rows; r++) {
     const meta = P.rows[r] || {};
     const label = h('input', {
-      class: 'row-label', type: 'text', placeholder: 'Tên đoạn', 'aria-label': `Tên đoạn của hàng ${r + 1}`, maxlength: 40,
+      class: 'row-label', type: 'text', placeholder: 'Tên đoạn (Intro, Verse...)', 'aria-label': `Tên đoạn của hàng ${r + 1}`, maxlength: 40,
     });
     label.value = meta.label || '';
     label.addEventListener('focus', () => snapOnce());
@@ -497,10 +461,9 @@ function renderSheet() {
       const { chords, carry } = barChords(P, i);
       const el = h('div', {
         class: 'bar', 'data-bar': i, role: 'button', tabindex: 0, 'aria-label': `Ô nhịp ${i + 1}`, style: `--cols:${P.beats * 4}`,
-      });
-      if (carry) el.append(h('div', { class: 'bar-carry', style: `grid-column: 1 / span ${Math.max(1, Math.round(carry.span * 4))}`, text: '%', title: 'Giữ hợp âm ở ô trước' }));
+      }, h('span', { class: 'bar-no', 'aria-hidden': 'true', text: String(i + 1) }));
+      if (carry) el.append(h('div', { class: 'bar-carry', style: `grid-column: 1 / span ${Math.max(1, Math.round(carry.span * 4))}`, title: 'Giữ hợp âm ở ô trước' }));
       for (const c of chords) {
-        const shown = transposeChord(c.ev.chord, P.transpose);
         const r2 = k && S.roman ? roman(c.ev.chord, k) : null;
         const inside = k ? inKey(c.ev.chord, k) : true;
         const chip = h('button', {
@@ -516,14 +479,14 @@ function renderSheet() {
       barEls[i] = el;
       barsEl.append(el);
     }
-    const lyrics = h('textarea', { class: 'lyrics', rows: 1, placeholder: `Lời cho ${per} ô nhịp này`, 'aria-label': `Lời của hàng ${r + 1}` });
+    const lyrics = h('textarea', { class: 'lyrics', rows: 1, placeholder: 'Lời bài hát cho các ô nhịp này', 'aria-label': `Lời của hàng ${r + 1}` });
     lyrics.value = meta.lyrics || '';
-    const fit = () => { lyrics.style.height = 'auto'; lyrics.style.height = lyrics.scrollHeight + 'px'; };
+    const fit = () => { lyrics.style.height = 'auto'; if (lyrics.scrollHeight > 0) lyrics.style.height = lyrics.scrollHeight + 'px'; };
     lyrics.addEventListener('focus', () => snapOnce());
     lyrics.addEventListener('input', () => { (P.rows[r] ||= {}).lyrics = lyrics.value; fit(); save(); });
     frag.append(
       h('div', { class: 'row', 'data-row': r },
-        h('div', { class: 'row-side' }, h('span', { class: 'row-no', text: `Ô ${r * per + 1}–${r * per + per}` }), label),
+        h('div', { class: 'row-head' }, label, h('span', { class: 'row-range', text: `Ô ${r * per + 1} đến ${r * per + per}` })),
         barsEl, lyrics),
     );
     requestAnimationFrame(fit);
@@ -620,10 +583,10 @@ function openEditor({ id = null, beat, anchor }) {
     h('div', { class: 'ed-row' }, bassSel, beatSel),
     h('div', { class: 'ed-row' },
       h('div', { class: 'group' },
-        h('button', { type: 'button', class: 'btn-quiet small', text: 'Nghe thử', onclick: () => audition(transposeChord(ed.chord, -T)) }),
-        ev ? h('button', { type: 'button', class: 'btn-quiet small danger', text: 'Xóa', onclick: () => { removeEvent(ev.id); closeEditor(); } }) : null),
+        h('button', { type: 'button', class: 'btn-ghost small', text: 'Nghe thử', onclick: () => audition(transposeChord(ed.chord, -T)) }),
+        ev ? h('button', { type: 'button', class: 'btn-ghost small danger', text: 'Xóa', onclick: () => { removeEvent(ev.id); closeEditor(); } }) : null),
       h('div', { class: 'group' },
-        h('button', { type: 'button', class: 'btn-quiet small', text: 'Hủy', onclick: closeEditor }),
+        h('button', { type: 'button', class: 'btn-ghost small', text: 'Hủy', onclick: closeEditor }),
         h('button', { type: 'button', class: 'btn-primary', text: ev ? 'Lưu' : 'Thêm vào ô nhịp', onclick: apply }))),
   );
   sync();
@@ -661,226 +624,7 @@ $('#sheet').addEventListener('keydown', (e) => {
   }
 });
 
-// ======================= Ghi âm hợp âm =======================
-const beatMs = () => 60000 / P.bpm;
-function quantStep() {
-  if (S.quant === 'half') return P.beats / 2;
-  if (S.quant === 'bar') return P.beats;
-  return +S.quant || 1;
-}
-
-function considerRecord(force) {
-  if (clock.mode !== 'armed' && clock.mode !== 'rec') return;
-  if (live.ghost) return;
-  const c = currentChord();
-  const r = live.result;
-  if (!c || !r || (r.kind !== 'power' && r.pcs.length < 3)) return;
-  const key = chordKey(c);
-  if (!force && live.pend && live.pend.key === key) return;
-  live.pend = { key, chord: { root: c.root, type: c.type, bass: c.bass }, at: performance.now() - 40 };
-  clearTimeout(live.pendTimer);
-  live.pendTimer = setTimeout(commitPending, 110);
-}
-
-function commitPending() {
-  const p = live.pend;
-  const c = currentChord();
-  if (!p || !c || chordKey(c) !== p.key) return;
-  if (clock.mode === 'armed') {
-    clock.t0 = p.at;
-    clock.mode = 'rec';
-    renderTransport();
-    startPlayheadLoop();
-  }
-  if (clock.mode !== 'rec') return;
-  const raw = (p.at - clock.t0) / beatMs();
-  const q = quantStep();
-  const beat = Math.max(0, Math.round(raw / q) * q);
-  const evs = sortedEvents(P);
-  const before = evs.filter((e) => e.beat <= beat + 1e-6).pop();
-  if (before && sameChord(before.chord, p.chord)) return;
-  placeEvent(p.chord, beat);
-  refreshKey();
-  renderKeyUI();
-  renderSheet();
-  renderSuggest();
-  save();
-}
-
-// ======================= Đồng hồ: metronome, phát lại, ghi =======================
-function startClock(beat0) {
-  clearInterval(clock.timer);
-  clock.startPerf = performance.now() + 120;
-  clock.beat0 = beat0;
-  clock.nextClick = Math.ceil(beat0 - 1e-9);
-  clock.timer = setInterval(tick, 25);
-  startPlayheadLoop();
-}
-const beatNow = () => clock.beat0 + (performance.now() - clock.startPerf) / beatMs();
-
-function tick() {
-  const bm = beatMs();
-  const now = performance.now();
-  const look = now + 160;
-  const tOf = (b) => clock.startPerf + (b - clock.beat0) * bm;
-
-  if (clock.mode === 'count' && beatNow() >= 0) {
-    clock.mode = 'rec';
-    clock.t0 = tOf(0);
-    renderTransport();
-  }
-  if (clock.mode === 'play' && tOf(clock.end) <= look) {
-    if (S.loop) {
-      const t = tOf(clock.end);
-      clock.startPerf = t;
-      clock.beat0 = clock.from;
-      clock.ptr = clock.items.findIndex((it) => it.beat >= clock.from - 1e-6);
-      if (clock.ptr < 0) clock.ptr = clock.items.length;
-      clock.nextClick = Math.ceil(clock.from - 1e-9);
-    } else if (now >= tOf(clock.end)) {
-      stopAll();
-      return;
-    }
-  }
-  const clicking = clock.mode === 'count' || S.metro;
-  while (tOf(clock.nextClick) <= look) {
-    const b = clock.nextClick;
-    const t = tOf(b);
-    const idx = ((b % P.beats) + P.beats) % P.beats;
-    if (clicking) synth.click(idx === 0, t);
-    setTimeout(() => flashBeat(idx), Math.max(0, t - performance.now()));
-    clock.nextClick++;
-  }
-  if (clock.mode === 'play') {
-    while (clock.ptr < clock.items.length && tOf(clock.items[clock.ptr].beat) <= look) {
-      const it = clock.items[clock.ptr++];
-      const t = tOf(it.beat);
-      const off = tOf(it.endBeat) - 30;
-      it.notes.forEach((n, i) => {
-        outNote(true, n, i === 0 ? 92 : 80, t);
-        outNote(false, n, 0, off);
-      });
-    }
-  }
-}
-
-function flashBeat(i) {
-  const d = $$('#beat-dots i')[i];
-  if (!d) return;
-  d.classList.add('hit');
-  d.classList.toggle('first', i === 0);
-  setTimeout(() => d.classList.remove('hit'), 110);
-}
-
-function stopAll() {
-  studio && studio.stop();
-  const was = clock.mode;
-  clearInterval(clock.timer);
-  clearTimeout(live.pendTimer);
-  cancelAnimationFrame(clock.raf);
-  clock.mode = 'idle';
-  clock.raf = 0;
-  clock.lastRow = -1;
-  panicOut();
-  $$('.bar.playing').forEach((b) => b.classList.remove('playing'));
-  $$('.chip.now').forEach((b) => b.classList.remove('now'));
-  renderTransport();
-  if (was === 'rec' || was === 'armed') {
-    refreshKey();
-    afterEdit();
-    if (P.events.length) toast('Đã ghi xong. Bấm vào ô nhịp hoặc hợp âm để sửa.');
-  }
-}
-
-function startRecord() {
-  stopAll();
-  closeEditor();
-  live.pend = null;
-  snap();
-  if (S.countIn) {
-    clock.mode = 'count';
-    startClock(-P.beats);
-  } else if (S.metro) {
-    clock.mode = 'rec';
-    startClock(0);
-    clock.t0 = clock.startPerf;
-  } else {
-    clock.mode = 'armed';
-  }
-  renderTransport();
-  if (clock.mode === 'armed') toast('Sẵn sàng. Hợp âm đầu tiên bạn chơi sẽ là phách 1.');
-}
-
-function startPlay() {
-  stopAll();
-  closeEditor();
-  const evs = sortedEvents(P);
-  if (!evs.length) { toast('Chưa có hợp âm để phát. Bấm Ghi hoặc thêm hợp âm trước.'); return; }
-  const endAll = Math.ceil((evs[evs.length - 1].beat + 0.001) / P.beats) * P.beats;
-  let prev = null;
-  clock.items = evs.map((e, i) => {
-    const notes = voiceChord(transposeChord(e.chord, P.transpose), prev);
-    prev = notes;
-    return { beat: e.beat, endBeat: evs[i + 1] ? evs[i + 1].beat : endAll, notes };
-  });
-  const sel = selId && P.events.find((e) => e.id === selId);
-  clock.from = sel ? Math.floor(sel.beat / P.beats + 1e-6) * P.beats : 0;
-  clock.end = endAll;
-  clock.ptr = clock.items.findIndex((it) => it.beat >= clock.from - 1e-6);
-  if (clock.ptr < 0) clock.ptr = clock.items.length;
-  clock.mode = 'play';
-  startClock(clock.from);
-  renderTransport();
-}
-
-function startPlayheadLoop() {
-  cancelAnimationFrame(clock.raf);
-  const loop = () => {
-    if (clock.mode === 'idle') return;
-    updatePlayhead();
-    clock.raf = requestAnimationFrame(loop);
-  };
-  clock.raf = requestAnimationFrame(loop);
-}
-
-function updatePlayhead() {
-  if (clock.mode === 'armed' || clock.mode === 'count') return;
-  const beat = clock.mode === 'rec' && !clock.timer ? (performance.now() - clock.t0) / beatMs() : beatNow();
-  if (beat < 0) return;
-  const bar = Math.floor(beat / P.beats);
-  barEls.forEach((el, i) => el && el.classList.toggle('playing', i === bar));
-  if (clock.mode === 'play') {
-    const cur = chordAtBeat(P, beat);
-    $$('.chip', $('#sheet')).forEach((c) => c.classList.toggle('now', !!cur && c.dataset.id === cur.id));
-  }
-  const rowIdx = Math.floor(bar / S.perRow);
-  if (rowIdx !== clock.lastRow) {
-    clock.lastRow = rowIdx;
-    const row = $(`.row[data-row="${rowIdx}"]`);
-    if (row) {
-      const r = row.getBoundingClientRect();
-      if (r.top < 120 || r.bottom > window.innerHeight - 220) row.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    }
-  }
-}
-
-function renderTransport() {
-  const m = clock.mode;
-  const rec = $('#btn-rec');
-  const play = $('#btn-play');
-  rec.setAttribute('aria-pressed', String(m === 'rec' || m === 'count'));
-  rec.classList.toggle('armed', m === 'armed');
-  $('#rec-label').textContent = m === 'count' ? 'Đếm vào…' : m === 'rec' ? 'Dừng ghi' : m === 'armed' ? 'Chờ nốt đầu' : 'Ghi';
-  play.setAttribute('aria-pressed', String(m === 'play'));
-  $('#play-label').textContent = m === 'play' ? 'Dừng' : 'Phát';
-  $('#play-icon').setAttribute('d', m === 'play' ? 'M3 3h4v10H3zM9 3h4v10H9z' : 'M4 2.5v11l9-5.5z');
-  const busy = m !== 'idle';
-  ['#bpm', '#bpm-up', '#bpm-down', '#sel-beats'].forEach((s) => { $(s).disabled = busy; });
-  $('#btn-play').disabled = m === 'rec' || m === 'count' || m === 'armed';
-  $('#btn-rec').disabled = m === 'play';
-}
-
-// ======================= Tông, chuyển tông, nốt hiển thị =======================
+// ======================= Tông, chuyển tông =======================
 function renderKeyUI() {
   const sel = $('#sel-key');
   const k = activeKey();
@@ -897,11 +641,11 @@ function renderKeyUI() {
   const note = $('#key-note');
   note.replaceChildren();
   if (!k) {
-    note.append('Chưa có hợp âm nào. Ghi, hoặc bấm vào một ô nhịp để thêm.');
+    note.append('Chưa có hợp âm nào. Bấm vào một ô nhịp để thêm, hoặc mở file MIDI ở tab Nhạc MIDI.');
   } else if (k.auto) {
     const conf = { high: 'khá chắc', mid: 'tương đối', low: 'chưa chắc, cần thêm hợp âm' }[k.confidence];
     note.append('Đoán là ', h('b', { text: keyName(k) }), ` (${conf}).`);
-    if (k.confidence !== 'high' && k.alt) note.append(' Cũng có thể là ', keyName(k.alt) + '. Chọn tông ở ô bên cạnh nếu bạn biết chắc.');
+    if (k.confidence !== 'high' && k.alt) note.append(' Cũng có thể là ', keyName(k.alt) + '. Chọn tông ở ô bên dưới nếu bạn biết chắc.');
   } else {
     note.append('Bạn đã chọn tông ', h('b', { text: keyName(k) }), '.');
   }
@@ -914,15 +658,12 @@ function renderKeyUI() {
 function renderControls() {
   $('#title').value = P.title;
   document.title = (P.title ? P.title + ' – ' : '') + 'Hòa Âm';
-  $('#bpm').value = P.bpm;
+  const bpm = $('#bpm');
+  bpm.value = P.bpm;
+  bpm.disabled = !!P.midi;
+  bpm.title = P.midi ? 'Tempo đang lấy theo bài MIDI. Đổi ở tab Nhạc MIDI.' : '';
   $('#sel-beats').value = String(P.beats);
-  $('#sel-quant').value = S.quant;
-  $('#t-metro').setAttribute('aria-pressed', String(S.metro));
-  $('#t-count').setAttribute('aria-pressed', String(S.countIn));
-  $('#t-loop').setAttribute('aria-pressed', String(S.loop));
   $('#t-roman').setAttribute('aria-pressed', String(S.roman));
-  const dots = $('#beat-dots');
-  dots.replaceChildren(...Array.from({ length: P.beats }, () => h('i')));
 }
 
 function renderAll() {
@@ -932,9 +673,8 @@ function renderAll() {
   renderSheet();
   renderLive();
   renderSuggest();
-  renderTransport();
   updateUndoButtons();
-  renderPips();
+  renderMidiTab();
 }
 
 // ======================= Thiết bị MIDI =======================
@@ -947,13 +687,8 @@ function renderDevice() {
   else if (hub.status === 'ready' && hub.activeInput) { lbl.textContent = hub.activeInput.name || 'Đã nối thiết bị MIDI'; btn.classList.add('on'); }
   else lbl.textContent = hub.status === 'ready' ? 'Chưa thấy đàn' : 'Kết nối đàn';
   renderLive();
+  studio && studio.refreshDevice();
   if ($('#dlg-device').open) buildDeviceDialog();
-}
-
-function renderPips() {
-  const pips = $('#pips');
-  if (!pips.children.length) for (let i = 0; i < 16; i++) pips.append(h('i'));
-  $$('i', pips).forEach((el, i) => el.classList.toggle('sel', S.channels.includes(i + 1)));
 }
 
 function closeBtn(dlg) {
@@ -963,7 +698,7 @@ function closeBtn(dlg) {
 function buildDeviceDialog() {
   const dlg = $('#dlg-device');
   const body = $('#dlg-device-body');
-  const inSel = h('select', { 'aria-label': 'Cổng vào MIDI' }, h('option', { value: 'all', text: 'Tất cả cổng vào' }),
+  const inSel = h('select', { 'aria-label': 'Cổng vào MIDI' }, h('option', { value: 'all', text: 'Tự chọn (ưu tiên Yamaha)' }),
     ...hub.inputs.map((p) => h('option', { value: p.id, text: p.name })));
   inSel.value = hub.inputId;
   inSel.addEventListener('change', () => hub.setInput(inSel.value));
@@ -977,27 +712,10 @@ function buildDeviceDialog() {
     ready: hub.inputs.length ? `Đang thấy ${hub.inputs.length} cổng vào và ${hub.outputs.length} cổng ra.` : 'Chưa thấy thiết bị nào.',
     idle: 'Chưa xin quyền MIDI.',
   }[hub.status];
-  body.replaceChildren(
-    closeBtn(dlg),
-    h('h3', { text: 'Kết nối đàn' }),
-    h('p', { class: 'sub', text: state }),
-    h('label', { class: 'field' }, 'Nhận nốt từ', inSel),
-    h('label', { class: 'field' }, 'Nghe thử qua đàn (khi chọn)', outSel),
-    h('div', { class: 'note-box' },
-      h('b', { text: 'Nếu không thấy đàn: ' }),
-      'bật đàn, nối cáp vào cổng USB TO HOST, rồi bấm Quét lại. Trên Windows có thể cần cài Yamaha Steinberg USB Driver. Đóng các phần mềm khác đang giữ cổng MIDI, vì mỗi lần chỉ một chương trình dùng được.'),
-    h('div', { class: 'dlg-actions' },
-      h('button', { type: 'button', class: 'btn-primary', text: 'Quét lại', onclick: async () => { if (hub.status === 'ready') hub.refresh(); else await hub.init(); renderDevice(); toast(hub.activeInput ? 'Đã thấy ' + hub.activeInput.name : 'Chưa thấy thiết bị MIDI nào'); } })),
-  );
-}
 
-function buildChannelsDialog() {
-  const dlg = $('#dlg-channels');
-  const body = $('#dlg-channels-body');
   const grid = h('div', { class: 'ch-grid' });
   const paint = () => {
     $$('button', grid).forEach((b) => b.setAttribute('aria-pressed', String(S.channels.includes(+b.dataset.ch))));
-    renderPips();
     saveSettingsSoon();
     live.held.clear(); live.sustained.clear(); scheduleAnalyze(0);
   };
@@ -1009,13 +727,23 @@ function buildChannelsDialog() {
     } }));
   }
   const preset = (label, list) => h('button', { type: 'button', class: 'toggle', text: label, onclick: () => { S.channels = list; paint(); } });
+
   body.replaceChildren(
     closeBtn(dlg),
-    h('h3', { text: 'Kênh MIDI nhận nốt' }),
-    h('p', { class: 'sub', text: 'Chỉ nốt ở các kênh được chọn mới được dùng để đọc hợp âm. Chơi vài phím và nhìn vạch xanh ở dưới số kênh để biết đàn đang gửi nốt ở kênh nào.' }),
-    h('div', { class: 'preset-row' }, preset('Tay đàn (1 đến 3)', [1, 2, 3]), preset('Chỉ kênh 1', [1]), preset('Tất cả kênh', Array.from({ length: 16 }, (_, i) => i + 1))),
-    grid,
-    h('div', { class: 'note-box' }, h('b', { text: 'Vì sao cần lọc: ' }), 'khi bật Style, đàn gửi cả bass, trống, hợp âm đệm ở các kênh cao (thường 9 đến 16). Nếu để lẫn vào, app sẽ đọc nhầm hợp âm. Phần tay phải và tay trái thường nằm ở kênh 1 đến 3.'),
+    h('h3', { text: 'Kết nối đàn' }),
+    h('p', { class: 'sub', text: state }),
+    h('label', { class: 'field wide' }, h('span', { text: 'Nhận nốt từ' }), inSel),
+    h('label', { class: 'field wide' }, h('span', { text: 'Phát nhạc ra' }), outSel),
+    h('div', { class: 'set-block' },
+      h('b', { text: 'Kênh dùng để đọc hợp âm' }),
+      h('span', { class: 'hint', text: 'Chơi vài phím, vạch xanh dưới số kênh cho biết đàn đang gửi nốt ở kênh nào. Tay phải và tay trái thường ở kênh 1 đến 3, phần đệm Style ở kênh cao hơn.' }),
+      h('div', { class: 'preset-row' }, preset('Tay đàn (1 đến 3)', [1, 2, 3]), preset('Chỉ kênh 1', [1]), preset('Tất cả kênh', Array.from({ length: 16 }, (_, i) => i + 1))),
+      grid),
+    h('div', { class: 'note-box' },
+      h('b', { text: 'Nếu không thấy đàn: ' }),
+      'bật đàn, nối cáp vào cổng USB TO HOST, rồi bấm Quét lại. Trên Windows có thể cần cài Yamaha Steinberg USB Driver. Đóng các phần mềm khác đang giữ cổng MIDI, vì mỗi lần chỉ một chương trình dùng được.'),
+    h('div', { class: 'dlg-actions' },
+      h('button', { type: 'button', class: 'btn-primary', text: 'Quét lại', onclick: async () => { if (hub.status === 'ready') hub.refresh(); else await hub.init(); renderDevice(); toast(hub.activeInput ? 'Đã thấy ' + hub.activeInput.name : 'Chưa thấy thiết bị MIDI nào'); } })),
   );
 }
 
@@ -1045,20 +773,15 @@ function buildSettingsDialog() {
   };
   seg('Độ chi tiết hợp âm', 'Cơ bản: tam hợp âm và hợp âm bảy. Đầy đủ: thêm 9, 11, 13 và các biến âm.', 'level', [[0, 'Cơ bản'], [1, 'Đầy đủ']], () => { analyze(); renderSuggest(); });
   seg('Dấu hóa', 'Tự động chọn thăng hoặc giáng theo tông của bài.', 'flatPref', [['auto', 'Tự động'], ['sharp', '♯'], ['flat', '♭']], () => { renderLive(); renderSheet(); renderSuggest(); });
-  seg('Cách gọi tên nốt', 'Chỉ áp dụng cho dòng nốt đang bấm.', 'solfege', [[false, 'C D E'], [true, 'Đô Rê Mi']], renderLive);
+  seg('Cách gọi tên nốt', 'Chỉ áp dụng cho dòng nốt đang chơi.', 'solfege', [[false, 'C D E'], [true, 'Đô Rê Mi']], renderLive);
   sw('Giữ hợp âm sau khi nhả phím', 'Tên hợp âm mờ đi nhưng không biến mất, tiện cho việc chép lại.', 'ghost');
   sw('Pedal sustain giữ nốt khi đọc', 'Tắt nếu bạn hay đạp pedal xuyên nhiều hợp âm.', 'pedal');
   sw('Hiện số La Mã dưới hợp âm', 'Cho biết hợp âm đứng ở bậc nào trong tông.', 'roman', () => { renderControls(); renderSheet(); });
-  sw('Dùng bàn phím máy tính như phím đàn', 'Phím A, W, S, E, D, F, T, G, Y, H, U, J, K.', 'qwerty', updateDockHelp);
-  seg('Nghe thử qua', 'Chọn Đàn để hợp âm gợi ý và phần phát lại vang ra loa của đàn.', 'output', [['browser', 'Trình duyệt'], ['midi', 'Đàn (MIDI)']], panicOut);
-  const vol = h('input', { type: 'range', min: 0, max: 1, step: 0.05, value: S.volume, 'aria-label': 'Âm lượng' });
-  vol.addEventListener('input', () => { S.volume = +vol.value; synth.setVolume(S.volume); saveSettingsSoon(); });
-  rows.push(h('div', { class: 'set' }, h('div', { class: 'set-text' }, h('b', { text: 'Âm lượng trình duyệt' }), h('span', { text: 'Không ảnh hưởng đến âm lượng của đàn.' })), vol));
-  seg('Cách gọi quãng tám', 'Đàn Yamaha gọi phím giữa là C3. Chuẩn quốc tế gọi là C4.', 'octave', [['yamaha', 'Yamaha'], ['intl', 'Quốc tế']], () => { mountKeyboard(); renderLive(); updateDockHelp(); });
+  seg('Cách gọi quãng tám', 'Đàn Yamaha gọi phím giữa là C3. Chuẩn quốc tế gọi là C4.', 'octave', [['yamaha', 'Yamaha'], ['intl', 'Quốc tế']], () => { mountKeyboard(); renderLive(); studio && studio.resize(); });
   seg('Số phím hiển thị', 'PSR-S975 có 61 phím.', 'keys', [[61, '61'], [76, '76'], [88, '88']], mountKeyboard);
   seg('Số ô nhịp mỗi hàng', 'Ảnh hưởng cách bản hợp âm xuống dòng và khi in.', 'perRow', [[2, '2'], [4, '4'], [6, '6'], [8, '8']], renderSheet);
   body.replaceChildren(closeBtn(dlg), h('h3', { text: 'Cài đặt' }), h('p', { class: 'sub', text: 'Mọi thay đổi được lưu ngay trên trình duyệt này.' }), ...rows,
-    h('div', { class: 'dlg-actions' }, h('button', { type: 'button', class: 'btn-quiet', text: 'Khôi phục mặc định', onclick: () => { Object.assign(S, DEFAULTS); synth.setVolume(S.volume); saveSettingsSoon(); mountKeyboard(); renderAll(); buildSettingsDialog(); } })));
+    h('div', { class: 'dlg-actions' }, h('button', { type: 'button', class: 'btn-ghost', text: 'Khôi phục mặc định', onclick: () => { Object.assign(S, DEFAULTS); saveSettingsSoon(); mountKeyboard(); renderAll(); buildSettingsDialog(); } })));
 }
 
 function fmtDate(ts) {
@@ -1074,7 +797,7 @@ function buildLibraryDialog() {
   const lib = Object.values(loadLibrary()).map(normalizeProject).sort((a, b) => b.updated - a.updated);
   const list = h('div', { class: 'list' });
   for (const p of lib) {
-    const del = h('button', { type: 'button', class: 'btn-quiet small danger', text: 'Xóa' });
+    const del = h('button', { type: 'button', class: 'btn-ghost small danger', text: 'Xóa' });
     let armed = false;
     del.addEventListener('click', () => {
       if (!armed) { armed = true; del.textContent = 'Bấm lần nữa để xóa'; setTimeout(() => { armed = false; del.textContent = 'Xóa'; }, 3000); return; }
@@ -1085,8 +808,8 @@ function buildLibraryDialog() {
     list.append(h('div', { class: 'lib-item' + (p.id === P.id ? ' cur' : '') },
       h('button', { type: 'button', class: 'lib-open', onclick: () => { P = normalizeProject(p); saveProject(P); resetAfterSwitch(); dlg.close(); } },
         h('b', { text: p.title || 'Bài chưa đặt tên' }), h('span', { text: `${p.events.length} hợp âm${p.midi ? ' + MIDI' : ''}, ${p.bpm} BPM, sửa lúc ${fmtDate(p.updated)}` })),
-      h('div', {},
-        h('button', { type: 'button', class: 'btn-quiet small', text: 'Nhân đôi', onclick: () => { const c = normalizeProject({ ...JSON.parse(JSON.stringify(p)), id: uid(), title: (p.title || 'Bài chưa đặt tên') + ' (bản sao)', created: Date.now(), updated: Date.now() }); saveProject(c); saveProject(P); buildLibraryDialog(); } }), del)));
+      h('div', { class: 'lib-actions' },
+        h('button', { type: 'button', class: 'btn-ghost small', text: 'Nhân đôi', onclick: () => { const c = normalizeProject({ ...JSON.parse(JSON.stringify(p)), id: uid(), title: (p.title || 'Bài chưa đặt tên') + ' (bản sao)', created: Date.now(), updated: Date.now() }); saveProject(c); saveProject(P); buildLibraryDialog(); } }), del)));
   }
   body.replaceChildren(closeBtn(dlg), h('h3', { text: 'Bản nhạc của tôi' }), h('p', { class: 'sub', text: 'Lưu tự động ngay trên trình duyệt này. Muốn mang sang máy khác, hãy xuất file .json ở nút Xuất file.' }),
     h('div', { class: 'dlg-actions' }, h('button', { type: 'button', class: 'btn-primary', text: 'Bài mới', onclick: () => { saveProject(P); P = newProject(); saveProject(P); resetAfterSwitch(); dlg.close(); } })),
@@ -1094,7 +817,7 @@ function buildLibraryDialog() {
 }
 
 function resetAfterSwitch() {
-  stopAll();
+  studio && studio.stop();
   studio && studio.show(P.midi, '');
   closeEditor();
   undoStack.length = 0;
@@ -1110,7 +833,7 @@ function buildExportDialog() {
   const opts = { perRow: S.perRow, key: k ? { tonic: k.tonic, mode: k.mode } : null };
   const name = slug(P.title);
   const text = () => projectToText(P, opts);
-  const act = (title, desc, label, fn) => h('div', { class: 'set' }, h('div', { class: 'set-text' }, h('b', { text: title }), h('span', { text: desc })), h('button', { type: 'button', class: 'btn-quiet', text: label, onclick: fn }));
+  const act = (title, desc, label, fn) => h('div', { class: 'set' }, h('div', { class: 'set-text' }, h('b', { text: title }), h('span', { text: desc })), h('button', { type: 'button', class: 'btn-ghost', text: label, onclick: fn }));
   const fileIn = h('input', { type: 'file', accept: '.json,application/json', hidden: true });
   fileIn.addEventListener('change', async () => {
     const f = fileIn.files[0];
@@ -1125,7 +848,7 @@ function buildExportDialog() {
   body.replaceChildren(closeBtn(dlg), h('h3', { text: 'Xuất file' }), h('p', { class: 'sub', text: 'Bản xuất dùng đúng tông đã chuyển và cách viết dấu hóa đang hiển thị.' }),
     act('Sao chép dạng chữ', 'Dán vào Zalo, Notes hay tài liệu bất kỳ.', 'Sao chép', async () => { try { await navigator.clipboard.writeText(text()); toast('Đã sao chép bản hợp âm'); } catch (e) { toast('Trình duyệt không cho sao chép. Hãy tải file .txt.'); } }),
     act('Tải file chữ (.txt)', 'Hợp âm theo ô nhịp, lời nằm dưới mỗi hàng.', 'Tải .txt', () => download(name + '.txt', text(), 'text/plain;charset=utf-8')),
-    act('Tải dãy hợp âm (.mid)', 'Chỉ phần hợp âm, để mở trong phần mềm thu âm hoặc nạp vào đàn. Bài MIDI đầy đủ tải ở mục Nhạc MIDI.', 'Tải .mid', () => download(name + '.mid', buildMidi(P), 'audio/midi')),
+    act('Tải dãy hợp âm (.mid)', 'Chỉ phần hợp âm, để mở trong phần mềm thu âm hoặc nạp vào đàn. Bài MIDI đầy đủ tải ở tab Nhạc MIDI.', 'Tải .mid', () => download(name + '.mid', buildMidi(P), 'audio/midi')),
     act('In hoặc lưu PDF', 'Chỉ in phần bản hợp âm, nền trắng, chữ đen.', 'In', () => { dlg.close(); setTimeout(() => window.print(), 150); }),
     act('Lưu nguyên bản (.json)', 'Để chép sang máy khác hoặc sao lưu.', 'Tải .json', () => download(name + '.json', JSON.stringify(P, null, 2), 'application/json')),
     act('Mở bản đã lưu (.json)', 'Nạp lại file .json đã xuất từ Hòa Âm.', 'Chọn file', () => fileIn.click()),
@@ -1138,16 +861,10 @@ function openDlg(id, build) {
   if (!d.open) d.showModal();
 }
 
-// ======================= Phím đàn (giao diện) =======================
-let qBase = 60;
+// ======================= Phím đàn (chỉ để nhìn) =======================
 function mountKeyboard() {
   const [lo, hi] = rangeFor(S.keys);
-  kbd = buildKeyboard($('#keyboard'), {
-    lo, hi,
-    onDown: virtualOn,
-    onUp: virtualOff,
-    label: (n) => noteName(0, { solfege: S.solfege }) + octOf(n),
-  });
+  kbd = buildKeyboard($('#keyboard'), { lo, hi, label: (n) => noteName(0, { solfege: S.solfege }) + octOf(n) });
   paintKeyboard();
 }
 function paintKeyboard() {
@@ -1157,14 +874,30 @@ function paintKeyboard() {
   const rootNote = c ? notes.filter((n) => n % 12 === c.root).sort((a, b) => a - b)[0] : null;
   kbd.set(new Set(notes), rootNote ?? null, null);
 }
-function updateDockHelp() {
-  $('#dock-help').textContent = S.qwerty ? 'Chơi thử bằng chuột hoặc phím A W S E D F T G Y H U J K. Chấm xanh là nốt gốc của hợp âm.' : 'Chấm xanh là nốt gốc của hợp âm. Bấm vào phím để nghe và thử.';
-  $('#oct-val').textContent = 'C' + octOf(qBase);
+
+// ======================= Hai khu làm việc =======================
+let view = 'chords';
+function showView(name) {
+  view = name;
+  $('#view-chords').hidden = name !== 'chords';
+  $('#view-midi').hidden = name !== 'midi';
+  $('#tab-chords').setAttribute('aria-selected', String(name === 'chords'));
+  $('#tab-midi').setAttribute('aria-selected', String(name === 'midi'));
+  if (name !== 'midi') { studio && studio.stop(); $$('.lyrics').forEach((t) => { t.style.height = 'auto'; if (t.scrollHeight > 0) t.style.height = t.scrollHeight + 'px'; }); }
+  else studio && requestAnimationFrame(() => studio.resize());
+  window.scrollTo({ top: 0 });
+}
+const routeFromHash = () => (location.hash === '#midi' ? 'midi' : 'chords');
+$('#tab-chords').addEventListener('click', () => { location.hash = '#hop-am'; });
+$('#tab-midi').addEventListener('click', () => { location.hash = '#midi'; });
+window.addEventListener('hashchange', () => showView(routeFromHash()));
+
+function renderMidiTab() {
+  const t = $('#tab-midi');
+  t.classList.toggle('has', !!P.midi);
 }
 
-// ======================= Bàn phím máy tính =======================
-const QMAP = 'awsedftgyhujkolp;';
-const qDown = new Map();
+// ======================= Phím tắt =======================
 function isTyping(t) {
   return t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
 }
@@ -1172,22 +905,22 @@ document.addEventListener('keydown', (e) => {
   if (e.ctrlKey || e.metaKey) {
     if (e.key.toLowerCase() === 'z' && !isTyping(e.target)) {
       e.preventDefault();
-      if (studio && studio.isFocused()) e.shiftKey ? studio.redo() : studio.undo();
+      if (view === 'midi') e.shiftKey ? studio.redo() : studio.undo();
       else e.shiftKey ? redo() : undo();
     }
     return;
   }
   if (e.altKey || isTyping(e.target) || $('dialog[open]')) return;
-  const k = e.key.toLowerCase();
   if (e.key === ' ') {
+    if (view !== 'midi') return;
     e.preventDefault();
     if (e.target.tagName === 'BUTTON') return;
-    if (studio && studio.isFocused()) { studio.togglePlay(); return; }
-    clock.mode === 'idle' ? startPlay() : stopAll();
+    studio.togglePlay();
     return;
   }
-  if (e.key === 'Escape') { if (!$('#editor').hidden) closeEditor(); else stopAll(); return; }
-  if (e.key === 'Delete' || e.key === 'Backspace') { if (studio && studio.isFocused()) return; if (selId) { e.preventDefault(); removeEvent(selId); } return; }
+  if (view === 'midi') return;
+  if (e.key === 'Escape') { closeEditor(); return; }
+  if (e.key === 'Delete' || e.key === 'Backspace') { if (selId) { e.preventDefault(); removeEvent(selId); } return; }
   if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
     const evs = sortedEvents(P);
     if (!evs.length) return;
@@ -1195,25 +928,7 @@ document.addEventListener('keydown', (e) => {
     const n = e.key === 'ArrowRight' ? Math.min(evs.length - 1, i + 1) : Math.max(0, i < 0 ? 0 : i - 1);
     selId = evs[n].id;
     renderSheet();
-    return;
   }
-  if (k === 'r' && !e.repeat) { clock.mode === 'rec' || clock.mode === 'count' || clock.mode === 'armed' ? stopAll() : startRecord(); return; }
-  if (!S.qwerty || e.repeat) return;
-  if (k === 'z') { qBase = Math.max(24, qBase - 12); updateDockHelp(); return; }
-  if (k === 'x') { qBase = Math.min(84, qBase + 12); updateDockHelp(); return; }
-  const i = QMAP.indexOf(k);
-  if (i >= 0 && !qDown.has(e.code)) {
-    const n = qBase + i;
-    qDown.set(e.code, n);
-    virtualOn(n);
-  }
-});
-document.addEventListener('keyup', (e) => {
-  if (qDown.has(e.code)) { virtualOff(qDown.get(e.code)); qDown.delete(e.code); }
-});
-window.addEventListener('blur', () => {
-  qDown.forEach((n) => virtualOff(n));
-  qDown.clear();
 });
 
 // ======================= Nối dây giao diện =======================
@@ -1221,44 +936,22 @@ hub.on('note', onMidiNote);
 hub.on('pedal', ({ down, ch }) => {
   if (!S.channels.includes(ch)) return;
   live.pedal = down;
-  if (!down && live.sustained.size) { live.sustained.clear(); scheduleAnalyze(60); }
+  if (!down && live.sustained.size) { live.sustained.clear(); scheduleAnalyze(0); }
 });
 hub.on('panic', () => { live.held.clear(); live.sustained.clear(); scheduleAnalyze(0); });
 hub.on('devices', renderDevice);
 
 $('#btn-device').addEventListener('click', () => openDlg('#dlg-device', buildDeviceDialog));
-$('#btn-channels').addEventListener('click', () => openDlg('#dlg-channels', buildChannelsDialog));
 $('#btn-settings').addEventListener('click', () => openDlg('#dlg-settings', buildSettingsDialog));
 $('#btn-library').addEventListener('click', () => openDlg('#dlg-library', buildLibraryDialog));
 $('#btn-export').addEventListener('click', () => openDlg('#dlg-export', buildExportDialog));
 $$('dialog').forEach((d) => d.addEventListener('click', (e) => { if (e.target === d) d.close(); }));
 
-$('#btn-rec').addEventListener('click', () => { clock.mode === 'idle' ? startRecord() : stopAll(); });
-$('#btn-play').addEventListener('click', () => { clock.mode === 'idle' ? startPlay() : stopAll(); });
-$('#bpm').addEventListener('change', (e) => { P.bpm = Math.min(260, Math.max(30, Math.round(+e.target.value || 90))); e.target.value = P.bpm; save(); });
-$('#bpm-down').addEventListener('click', () => { P.bpm = Math.max(30, P.bpm - 1); $('#bpm').value = P.bpm; save(); });
-$('#bpm-up').addEventListener('click', () => { P.bpm = Math.min(260, P.bpm + 1); $('#bpm').value = P.bpm; save(); });
-let taps = [];
-$('#btn-tap').addEventListener('click', () => {
-  const t = performance.now();
-  if (taps.length && t - taps[taps.length - 1] > 2000) taps = [];
-  taps.push(t);
-  taps = taps.slice(-5);
-  if (taps.length >= 2) {
-    const avg = (taps[taps.length - 1] - taps[0]) / (taps.length - 1);
-    P.bpm = Math.min(260, Math.max(30, Math.round(60000 / avg)));
-    $('#bpm').value = P.bpm;
-    save();
-  }
-});
-$('#sel-beats').addEventListener('change', (e) => { P.beats = +e.target.value; renderControls(); afterEdit(); });
-$('#sel-quant').addEventListener('change', (e) => { S.quant = e.target.value; saveSettingsSoon(); });
 const flip = (id, key, after) => $(id).addEventListener('click', () => { S[key] = !S[key]; $(id).setAttribute('aria-pressed', String(S[key])); saveSettingsSoon(); after && after(); });
-flip('#t-metro', 'metro');
-flip('#t-count', 'countIn');
-flip('#t-loop', 'loop');
 flip('#t-roman', 'roman', renderSheet);
 
+$('#bpm').addEventListener('change', (e) => { P.bpm = clampN(Math.round(+e.target.value || 90), 30, 260); e.target.value = P.bpm; save(); });
+$('#sel-beats').addEventListener('change', (e) => { snap(); P.beats = +e.target.value; renderControls(); afterEdit(); });
 $('#title').addEventListener('input', (e) => { P.title = e.target.value; document.title = (P.title ? P.title + ' – ' : '') + 'Hòa Âm'; save(); });
 $('#sel-key').addEventListener('change', (e) => {
   snap();
@@ -1266,7 +959,7 @@ $('#sel-key').addEventListener('change', (e) => {
   else { const [t, m] = e.target.value.split(':'); P.keyOverride = { tonic: +t, mode: m }; }
   afterEdit();
 });
-const shiftT = (d) => { P.transpose = Math.max(-11, Math.min(11, P.transpose + d)); closeEditor(); renderKeyUI(); renderSheet(); save(); };
+const shiftT = (d) => { P.transpose = clampN(P.transpose + d, -11, 11); closeEditor(); renderKeyUI(); renderSheet(); save(); };
 $('#tr-down').addEventListener('click', () => shiftT(-1));
 $('#tr-up').addEventListener('click', () => shiftT(1));
 $('#btn-undo').addEventListener('click', undo);
@@ -1284,14 +977,10 @@ $('#btn-addrow').addEventListener('click', () => { snap(); P.bars = totalBars(P,
 }
 $('#btn-notes-mode').addEventListener('click', () => { S.solfege = !S.solfege; saveSettingsSoon(); mountKeyboard(); renderLive(); });
 $('#btn-capture').addEventListener('click', () => { const c = currentChord() || (live.ghost ? live.chord : null); if (c) appendChord({ root: c.root, type: c.type, bass: c.bass }); });
-$('#oct-down').addEventListener('click', () => { qBase = Math.max(24, qBase - 12); updateDockHelp(); });
-$('#oct-up').addEventListener('click', () => { qBase = Math.min(84, qBase + 12); updateDockHelp(); });
 
 window.addEventListener('beforeunload', () => { P.updated = Date.now(); saveProject(P); });
 
 // ======================= Nhạc MIDI =======================
-const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
-
 function adoptMidi(song, name) {
   const fresh = !P.events.length && !P.midi && !P.title;
   if (!fresh) { saveProject(P); P = newProject(); }
@@ -1307,16 +996,16 @@ function adoptMidi(song, name) {
   resetAfterSwitch();
   studio.show(song, name);
   const ids = song.parts.filter((p) => p.channel !== 9 && p.notes.length).map((p) => p.id);
-  let msg = blank ? 'Đã tạo bài trống. Bấm đúp vào piano roll để thêm nốt đầu tiên.' : 'Đã mở file MIDI. Bấm Phát để nghe.';
+  let msg = blank ? 'Đã tạo bài trống. Bấm đúp vào piano roll để thêm nốt đầu tiên.' : 'Đã mở file MIDI. Nối đàn rồi bấm Phát để nghe.';
   if (ids.length) {
     const ev = extractChords(song, { partIds: ids, unitBeats: P.beats });
     P.events = ev.map((e) => ({ id: uid(), beat: e.beat, chord: e.chord }));
-    if (ev.length) msg += ` Đã đoán ${ev.length} hợp âm vào bản nhạc, bạn có thể lấy lại với độ dày khác.`;
+    if (ev.length) msg += ` Đã đoán ${ev.length} hợp âm sang tab Hợp âm.`;
   }
   P.updated = Date.now();
   saveProject(P);
   renderAll();
-  studio.scrollIntoView();
+  if (view !== 'midi') location.hash = '#midi';
   toast(msg);
 }
 
@@ -1328,22 +1017,23 @@ function applyChords(ev, { beats }) {
   selId = null;
   renderControls();
   afterEdit();
-  $('#sheet-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const fs = document.fullscreenElement;
+  if (fs) document.exitFullscreen().catch(() => {});
+  location.hash = '#hop-am';
   toast(`Đã lấy ${ev.length} hợp âm vào bản nhạc.`);
 }
 
 studio = createStudio({
-  root: $('#studio-root'), h, S, hub, synth, toast,
+  root: $('#studio-root'), h, hub, toast,
   getP: () => P,
-  saveS: saveSettingsSoon,
-  onSongChange: (song) => { P.midi = song; if (song) P.bpm = clampN(Math.round(song.tempos[0].bpm), 30, 260); renderControls(); save(); },
-  stopOther: () => { if (clock.mode !== 'idle') stopAll(); },
+  onSongChange: (song) => { P.midi = song; if (song) P.bpm = clampN(Math.round(song.tempos[0].bpm), 30, 260); renderControls(); renderMidiTab(); save(); },
+  stopOther: () => {},
+  openDevice: () => openDlg('#dlg-device', buildDeviceDialog),
   adopt: adoptMidi,
   applyChords,
   noteLabel: (n) => noteLabel(n, false),
   download, slug,
 });
-$('#btn-midi-open').addEventListener('click', () => studio.pickFile());
 
 // Kéo thả file .mid vào bất kỳ đâu
 {
@@ -1365,18 +1055,17 @@ $('#btn-midi-open').addEventListener('click', () => studio.pickFile());
 
 // ======================= Khởi động =======================
 mountKeyboard();
-updateDockHelp();
 renderAll();
 studio.show(P.midi, '');
+showView(routeFromHash());
 saveProject(P);
 hub.init().then(renderDevice);
 
-// Móc gỡ lỗi nhỏ: cho phép test bằng tay hoặc tự động mà không cần đàn thật.
+// Móc gỡ lỗi nhỏ: cho phép test tự động mà không cần đàn thật.
 window.__hoaam = {
   note: (on, note, ch = 1) => onMidiNote({ on, note, vel: 90, ch }),
   project: () => P,
   settings: S,
-  clock,
   live,
   hub,
   studio,
