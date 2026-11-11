@@ -7,6 +7,12 @@
   <meta name="description" content="Nối đàn organ qua USB, chơi đến đâu Hòa Âm đọc hợp âm đến đó. Mở file MIDI, sửa từng nốt, phát qua đàn và tải về thành bài của bạn.">
   <meta name="theme-color" content="#13101a">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Hòa Âm">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,600;1,800&family=Be+Vietnam+Pro:wght@300;400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,300..500;1,6..72,300..500&display=swap" rel="stylesheet">
@@ -37,6 +43,7 @@
         <span class="led" id="led" aria-hidden="true"></span>
         <span id="device-label">Kết nối đàn</span>
       </button>
+      <button class="btn-ghost" id="btn-install" type="button" hidden>Cài app</button>
       <button class="btn-ghost" id="btn-library" type="button" aria-haspopup="dialog">Bản nhạc của tôi</button>
       <button class="btn-ghost" id="btn-settings" type="button" aria-haspopup="dialog">Cài đặt</button>
     </div>

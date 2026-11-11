@@ -97,3 +97,9 @@ Test phủ nhận diện hợp âm, đoán tông, số La Mã, gợi ý, voicing
 - Phần tay phải và tay trái của đàn Yamaha thường gửi ở kênh 1 đến 3, phần đệm style ở kênh cao hơn. Mặc định app chỉ nghe kênh 1 đến 3, đổi ở nút **Kênh nhận**.
 - Yamaha gọi phím giữa là C3, chuẩn quốc tế gọi là C4. Mặc định app theo Yamaha, đổi trong Cài đặt.
 - Trên Windows, nếu không thấy đàn, cài Yamaha Steinberg USB Driver và đóng các phần mềm khác đang giữ cổng MIDI.
+
+## Chạy như app
+
+- Bấm sang tab **Hợp âm** hoặc **Nhạc MIDI** thì cả trang vào toàn màn hình (trình duyệt cần một cú bấm của bạn mới cho). Esc để thoát.
+- Không bôi đen, không nhấp đúp chọn chữ, không menu chuột phải (trừ trong ô nhập chữ như lời bài).
+- **Cài app**: bấm nút "Cài app" ở thanh trên (Chrome/Edge), hoặc menu trình duyệt > Cài đặt ứng dụng. Mở từ biểu tượng là toàn màn hình luôn. Trên iPhone/iPad: Chia sẻ > Thêm vào Màn hình chính (chạy toàn màn hình nhưng iOS không có nút Cài app).

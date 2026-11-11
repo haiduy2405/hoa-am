@@ -118,7 +118,8 @@ let toastTimer = 0;
 function toast(msg) {
   const t = $('#toast');
   // Khi một phần đang toàn màn hình, chỉ phần đó được hiển thị, nên thông báo phải nằm trong nó.
-  const host = document.fullscreenElement || ($('.css-full') ?? document.body);
+  const fe = document.fullscreenElement;
+  const host = (fe && fe !== document.documentElement ? fe : null) || ($('.css-full') ?? document.body);
   if (t.parentElement !== host) host.append(t);
   t.textContent = msg;
   t.classList.add('show');
@@ -878,8 +879,15 @@ function paintKeyboard() {
 
 // ======================= Hai khu làm việc =======================
 let view = 'home';
+// Vào Hợp âm hoặc Nhạc MIDI thì cả app toàn màn hình, như một ứng dụng. Phải đến từ một cú bấm của người dùng.
+function enterFullscreen() {
+  const el = document.documentElement;
+  if (document.fullscreenElement || !el.requestFullscreen) return Promise.resolve();
+  return el.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
+}
 function showView(name) {
   view = name;
+  if (name !== 'home') enterFullscreen();
   $('#view-home').hidden = name !== 'home';
   $('#tab-home').setAttribute('aria-selected', String(name === 'home'));
   if (name === 'home') renderHome();
@@ -1046,7 +1054,7 @@ function applyChords(ev, { beats }) {
   renderControls();
   afterEdit();
   const fs = document.fullscreenElement;
-  if (fs) document.exitFullscreen().catch(() => {});
+  if (fs && fs !== document.documentElement) document.exitFullscreen().then(enterFullscreen).catch(() => {});
   location.hash = '#hop-am';
   toast(`Đã lấy ${ev.length} hợp âm vào bản nhạc.`);
 }
@@ -1100,3 +1108,30 @@ window.__hoaam = {
   studio,
   adoptMidi,
 };
+
+
+// ======================= Chạy như app =======================
+// Không bôi đen, không menu chuột phải (trừ trong ô nhập chữ), không kéo thả.
+const isEditable = (t) => t instanceof Element && !!t.closest('input, textarea, [contenteditable="true"]');
+document.addEventListener('contextmenu', (e) => { if (!isEditable(e.target)) e.preventDefault(); });
+document.addEventListener('selectstart', (e) => { if (!isEditable(e.target)) e.preventDefault(); });
+document.addEventListener('dragstart', (e) => { if (!isEditable(e.target)) e.preventDefault(); });
+
+// Cài ra màn hình: mở từ biểu tượng là toàn màn hình luôn (manifest display: fullscreen).
+let installEvt = null;
+const installBtn = $('#btn-install');
+const isInstalled = () => matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  installEvt = e;
+  if (!isInstalled()) installBtn.hidden = false;
+});
+installBtn.addEventListener('click', async () => {
+  if (!installEvt) return;
+  installEvt.prompt();
+  await installEvt.userChoice.catch(() => {});
+  installEvt = null;
+  installBtn.hidden = true;
+});
+window.addEventListener('appinstalled', () => { installBtn.hidden = true; toast('Đã cài Hòa Âm ra màn hình.'); });
+if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
