@@ -1,4 +1,5 @@
 import { newProject } from './model.js';
+import { deserializeSong } from './songmidi.js';
 
 const K = { set: 'hoaam.settings.v1', lib: 'hoaam.projects.v1', cur: 'hoaam.current.v1' };
 
@@ -33,8 +34,9 @@ const read = (k, fallback) => {
 const write = (k, v) => {
   try {
     localStorage.setItem(k, JSON.stringify(v));
+    return true;
   } catch (e) {
-    /* hết chỗ hoặc bị chặn: bỏ qua, app vẫn chạy */
+    return false; // hết chỗ hoặc bị chặn: app vẫn chạy, người gọi quyết định báo gì
   }
 };
 
@@ -49,6 +51,9 @@ export function normalizeProject(p) {
   out.bpm = Math.min(260, Math.max(30, +out.bpm || 90));
   out.beats = Math.min(6, Math.max(2, +out.beats || 4));
   out.transpose = Math.max(-11, Math.min(11, +out.transpose || 0));
+  if (out.midi) {
+    try { out.midi = deserializeSong(out.midi); } catch (e) { out.midi = null; }
+  } else out.midi = null;
   return out;
 }
 
@@ -57,8 +62,9 @@ export const loadLibrary = () => read(K.lib, {});
 export function saveProject(p) {
   const lib = loadLibrary();
   lib[p.id] = p;
-  write(K.lib, lib);
+  const ok = write(K.lib, lib);
   write(K.cur, p.id);
+  return ok;
 }
 
 export function deleteProject(id) {

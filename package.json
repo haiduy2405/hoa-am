@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Dò hợp âm trực tiếp từ đàn organ qua Web MIDI",
   "scripts": {
-    "test": "node --test test/engine.test.mjs",
+    "test": "node --test test/engine.test.mjs test/songmidi.test.mjs",
     "start": "python3 -m http.server 8000"
   }
 }

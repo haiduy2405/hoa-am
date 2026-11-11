@@ -27,6 +27,17 @@ Chưa có đàn? Chơi thử bằng chuột trên phím bên dưới, hoặc bà
 - Phát lại qua trình duyệt hoặc qua loa của đàn (MIDI out), có lặp.
 - Xuất: sao chép chữ, .txt, .mid, .json, in hoặc lưu PDF. Lưu tự động nhiều bài trên trình duyệt.
 
+## Nhạc MIDI: mở file, nghe, sửa, làm thành bài của mình
+
+1. Bấm **Mở file MIDI** (hoặc kéo thả file .mid vào trang). App đọc hết các nhạc cụ, tempo, nhịp, pedal và tự đoán hợp âm vào bản nhạc.
+2. Bấm **Phát** để nghe bằng trình duyệt, hoặc bật **Phát qua đàn** để nghe bằng âm thanh thật của đàn (cần nối MIDI out).
+3. Sửa trên piano roll: bấm đúp để thêm nốt, kéo để dời, kéo mép phải để đổi độ dài, kéo khung để chọn nhiều nốt, kéo ở dải Lực nhấn để đổi độ mạnh. Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+D, phím mũi tên, Delete đều dùng được.
+4. Đổi âm sắc từng phần (128 âm sắc GM), tắt tiếng hoặc solo, làm tròn nhịp theo lưới, chuyển tông từng phần hoặc cả bài, đổi tempo, thêm phần nhạc cụ hoặc trống mới.
+5. **Lấy hợp âm vào bản nhạc** đọc hợp âm từ các phần bạn chọn. **Thêm phần hợp âm** làm ngược lại: biến bản hợp âm của bạn thành một phần đệm.
+6. **Tải file .mid** lưu bài đã sửa (nhiều track, giữ tempo, pedal, bánh pitch) để mở tiếp trong phần mềm thu âm.
+
+Giới hạn: không đọc file dùng mốc thời gian SMPTE, không phát được âm thanh thật của từng nhạc cụ khi nghe bằng trình duyệt (synth đơn giản; muốn đúng âm sắc hãy phát qua đàn), file tối đa 8 MB. Bài rất lớn có thể vượt dung lượng lưu tự động của trình duyệt, khi đó app báo và bạn nên tải .mid về.
+
 ## Chạy trên máy
 
 Cần một web server tĩnh vì dùng ES module (mở thẳng file `index.html` sẽ bị chặn):
@@ -44,7 +55,7 @@ Web MIDI chỉ chạy trên `https://` hoặc `localhost`.
 npm test
 ```
 
-Test phủ phần nhận diện hợp âm, đọc tên hợp âm, đoán tông, số La Mã, gợi ý, voicing và xuất file.
+Test phủ nhận diện hợp âm, đoán tông, số La Mã, gợi ý, voicing, xuất file, và đọc ghi file MIDI (running status, tempo map, pedal, lấy hợp âm từ nốt).
 
 ## Cấu trúc
 
@@ -55,7 +66,11 @@ Test phủ phần nhận diện hợp âm, đọc tên hợp âm, đoán tông, 
 | `js/midi.js` | Bọc Web MIDI, tự tìm đàn Yamaha |
 | `js/audio.js` | Synth và metronome bằng WebAudio |
 | `js/keyboard.js` | Phím đàn trên màn hình |
-| `js/export.js` | Xuất chữ và MIDI |
+| `js/export.js` | Xuất chữ và MIDI dãy hợp âm |
+| `js/songmidi.js` | Đọc và ghi file MIDI, sửa nốt, lấy hợp âm từ nốt |
+| `js/player.js` | Lập lịch phát bản MIDI |
+| `js/roll.js` | Piano roll bằng canvas |
+| `js/midiui.js` | Giao diện phòng nhạc MIDI |
 | `js/store.js` | Lưu cài đặt và bản nhạc trên trình duyệt |
 | `js/app.js` | Giao diện và nối các phần lại |
 

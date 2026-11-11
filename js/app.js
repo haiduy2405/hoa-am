@@ -7,6 +7,8 @@ import { MidiHub } from './midi.js';
 import { Synth } from './audio.js';
 import { buildKeyboard, rangeFor } from './keyboard.js';
 import { buildMidi, download, projectToText, slug } from './export.js';
+import { barBeats, extractChords, newSong, songEnd } from './songmidi.js';
+import { createStudio } from './midiui.js';
 import { DEFAULTS, deleteProject, loadCurrent, loadLibrary, loadSettings, normalizeProject, saveProject, saveSettings } from './store.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -47,11 +49,17 @@ const redoStack = [];
 
 const saveSettingsSoon = () => saveSettings(S);
 let saveTimer = 0;
+let saveWarned = false;
+let studio = null;
 function save() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     P.updated = Date.now();
-    saveProject(P);
+    if (saveProject(P)) saveWarned = false;
+    else if (!saveWarned) {
+      saveWarned = true;
+      toast('Bản nhạc quá lớn để lưu tự động trên trình duyệt. Hãy tải file .mid hoặc .json để giữ lại.');
+    }
   }, 250);
 }
 
@@ -373,8 +381,9 @@ function textSheetRaw(c) {
 }
 
 // ======================= Sửa bản nhạc (có hoàn tác) =======================
+const chartState = () => JSON.stringify({ events: P.events, rows: P.rows, bars: P.bars, bpm: P.bpm, beats: P.beats });
 function snap() {
-  undoStack.push(JSON.stringify({ events: P.events, rows: P.rows, bars: P.bars }));
+  undoStack.push(chartState());
   if (undoStack.length > 80) undoStack.shift();
   redoStack.length = 0;
   updateUndoButtons();
@@ -384,17 +393,20 @@ function restore(json) {
   P.events = d.events;
   P.rows = d.rows;
   P.bars = d.bars;
+  if (d.bpm) P.bpm = d.bpm;
+  if (d.beats) P.beats = d.beats;
+  renderControls();
   afterEdit();
 }
 function undo() {
   if (!undoStack.length) return;
-  redoStack.push(JSON.stringify({ events: P.events, rows: P.rows, bars: P.bars }));
+  redoStack.push(chartState());
   restore(undoStack.pop());
   updateUndoButtons();
 }
 function redo() {
   if (!redoStack.length) return;
-  undoStack.push(JSON.stringify({ events: P.events, rows: P.rows, bars: P.bars }));
+  undoStack.push(chartState());
   restore(redoStack.pop());
   updateUndoButtons();
 }
@@ -761,6 +773,7 @@ function flashBeat(i) {
 }
 
 function stopAll() {
+  studio && studio.stop();
   const was = clock.mode;
   clearInterval(clock.timer);
   clearTimeout(live.pendTimer);
@@ -1071,7 +1084,7 @@ function buildLibraryDialog() {
     });
     list.append(h('div', { class: 'lib-item' + (p.id === P.id ? ' cur' : '') },
       h('button', { type: 'button', class: 'lib-open', onclick: () => { P = normalizeProject(p); saveProject(P); resetAfterSwitch(); dlg.close(); } },
-        h('b', { text: p.title || 'Bài chưa đặt tên' }), h('span', { text: `${p.events.length} hợp âm, ${p.bpm} BPM, sửa lúc ${fmtDate(p.updated)}` })),
+        h('b', { text: p.title || 'Bài chưa đặt tên' }), h('span', { text: `${p.events.length} hợp âm${p.midi ? ' + MIDI' : ''}, ${p.bpm} BPM, sửa lúc ${fmtDate(p.updated)}` })),
       h('div', {},
         h('button', { type: 'button', class: 'btn-quiet small', text: 'Nhân đôi', onclick: () => { const c = normalizeProject({ ...JSON.parse(JSON.stringify(p)), id: uid(), title: (p.title || 'Bài chưa đặt tên') + ' (bản sao)', created: Date.now(), updated: Date.now() }); saveProject(c); saveProject(P); buildLibraryDialog(); } }), del)));
   }
@@ -1082,6 +1095,7 @@ function buildLibraryDialog() {
 
 function resetAfterSwitch() {
   stopAll();
+  studio && studio.show(P.midi, '');
   closeEditor();
   undoStack.length = 0;
   redoStack.length = 0;
@@ -1111,7 +1125,7 @@ function buildExportDialog() {
   body.replaceChildren(closeBtn(dlg), h('h3', { text: 'Xuất file' }), h('p', { class: 'sub', text: 'Bản xuất dùng đúng tông đã chuyển và cách viết dấu hóa đang hiển thị.' }),
     act('Sao chép dạng chữ', 'Dán vào Zalo, Notes hay tài liệu bất kỳ.', 'Sao chép', async () => { try { await navigator.clipboard.writeText(text()); toast('Đã sao chép bản hợp âm'); } catch (e) { toast('Trình duyệt không cho sao chép. Hãy tải file .txt.'); } }),
     act('Tải file chữ (.txt)', 'Hợp âm theo ô nhịp, lời nằm dưới mỗi hàng.', 'Tải .txt', () => download(name + '.txt', text(), 'text/plain;charset=utf-8')),
-    act('Tải file MIDI (.mid)', 'Dãy hợp âm làm sẵn để mở trong phần mềm thu âm hoặc nạp vào đàn.', 'Tải .mid', () => download(name + '.mid', buildMidi(P), 'audio/midi')),
+    act('Tải dãy hợp âm (.mid)', 'Chỉ phần hợp âm, để mở trong phần mềm thu âm hoặc nạp vào đàn. Bài MIDI đầy đủ tải ở mục Nhạc MIDI.', 'Tải .mid', () => download(name + '.mid', buildMidi(P), 'audio/midi')),
     act('In hoặc lưu PDF', 'Chỉ in phần bản hợp âm, nền trắng, chữ đen.', 'In', () => { dlg.close(); setTimeout(() => window.print(), 150); }),
     act('Lưu nguyên bản (.json)', 'Để chép sang máy khác hoặc sao lưu.', 'Tải .json', () => download(name + '.json', JSON.stringify(P, null, 2), 'application/json')),
     act('Mở bản đã lưu (.json)', 'Nạp lại file .json đã xuất từ Hòa Âm.', 'Chọn file', () => fileIn.click()),
@@ -1156,14 +1170,24 @@ function isTyping(t) {
 }
 document.addEventListener('keydown', (e) => {
   if (e.ctrlKey || e.metaKey) {
-    if (e.key.toLowerCase() === 'z' && !isTyping(e.target)) { e.preventDefault(); e.shiftKey ? redo() : undo(); }
+    if (e.key.toLowerCase() === 'z' && !isTyping(e.target)) {
+      e.preventDefault();
+      if (studio && studio.isFocused()) e.shiftKey ? studio.redo() : studio.undo();
+      else e.shiftKey ? redo() : undo();
+    }
     return;
   }
   if (e.altKey || isTyping(e.target) || $('dialog[open]')) return;
   const k = e.key.toLowerCase();
-  if (e.key === ' ') { e.preventDefault(); if (e.target.tagName === 'BUTTON') return; clock.mode === 'idle' ? startPlay() : stopAll(); return; }
+  if (e.key === ' ') {
+    e.preventDefault();
+    if (e.target.tagName === 'BUTTON') return;
+    if (studio && studio.isFocused()) { studio.togglePlay(); return; }
+    clock.mode === 'idle' ? startPlay() : stopAll();
+    return;
+  }
   if (e.key === 'Escape') { if (!$('#editor').hidden) closeEditor(); else stopAll(); return; }
-  if (e.key === 'Delete' || e.key === 'Backspace') { if (selId) { e.preventDefault(); removeEvent(selId); } return; }
+  if (e.key === 'Delete' || e.key === 'Backspace') { if (studio && studio.isFocused()) return; if (selId) { e.preventDefault(); removeEvent(selId); } return; }
   if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
     const evs = sortedEvents(P);
     if (!evs.length) return;
@@ -1265,10 +1289,85 @@ $('#oct-up').addEventListener('click', () => { qBase = Math.min(84, qBase + 12);
 
 window.addEventListener('beforeunload', () => { P.updated = Date.now(); saveProject(P); });
 
+// ======================= Nhạc MIDI =======================
+const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
+
+function adoptMidi(song, name) {
+  const fresh = !P.events.length && !P.midi && !P.title;
+  if (!fresh) { saveProject(P); P = newProject(); }
+  const blank = name === 'Bài mới';
+  P.midi = song;
+  P.title = song.title && song.title !== 'Hoa Am' ? song.title : blank ? '' : name;
+  P.bpm = clampN(Math.round(song.tempos[0].bpm), 30, 260);
+  P.beats = clampN(Math.round(barBeats(song)), 2, 6);
+  P.bars = clampN(Math.ceil(songEnd(song) / song.ppq / P.beats), 8, 400);
+  P.transpose = 0;
+  P.keyOverride = null;
+  P.events = [];
+  resetAfterSwitch();
+  studio.show(song, name);
+  const ids = song.parts.filter((p) => p.channel !== 9 && p.notes.length).map((p) => p.id);
+  let msg = blank ? 'Đã tạo bài trống. Bấm đúp vào piano roll để thêm nốt đầu tiên.' : 'Đã mở file MIDI. Bấm Phát để nghe.';
+  if (ids.length) {
+    const ev = extractChords(song, { partIds: ids, unitBeats: P.beats });
+    P.events = ev.map((e) => ({ id: uid(), beat: e.beat, chord: e.chord }));
+    if (ev.length) msg += ` Đã đoán ${ev.length} hợp âm vào bản nhạc, bạn có thể lấy lại với độ dày khác.`;
+  }
+  P.updated = Date.now();
+  saveProject(P);
+  renderAll();
+  studio.scrollIntoView();
+  toast(msg);
+}
+
+function applyChords(ev, { beats }) {
+  snap();
+  P.beats = clampN(Math.round(beats), 2, 6);
+  P.events = ev.map((e) => ({ id: uid(), beat: e.beat, chord: e.chord }));
+  P.bars = Math.max(8, Math.ceil((ev[ev.length - 1].beat + 0.001) / P.beats));
+  selId = null;
+  renderControls();
+  afterEdit();
+  $('#sheet-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  toast(`Đã lấy ${ev.length} hợp âm vào bản nhạc.`);
+}
+
+studio = createStudio({
+  root: $('#studio-root'), h, S, hub, synth, toast,
+  getP: () => P,
+  saveS: saveSettingsSoon,
+  onSongChange: (song) => { P.midi = song; if (song) P.bpm = clampN(Math.round(song.tempos[0].bpm), 30, 260); renderControls(); save(); },
+  stopOther: () => { if (clock.mode !== 'idle') stopAll(); },
+  adopt: adoptMidi,
+  applyChords,
+  noteLabel: (n) => noteLabel(n, false),
+  download, slug,
+});
+$('#btn-midi-open').addEventListener('click', () => studio.pickFile());
+
+// Kéo thả file .mid vào bất kỳ đâu
+{
+  const drop = $('#drop');
+  let depth = 0;
+  const hasFile = (e) => e.dataTransfer && [...e.dataTransfer.types].includes('Files');
+  document.addEventListener('dragenter', (e) => { if (hasFile(e)) { depth++; drop.hidden = false; } });
+  document.addEventListener('dragleave', (e) => { if (hasFile(e) && --depth <= 0) { depth = 0; drop.hidden = true; } });
+  document.addEventListener('dragover', (e) => { if (hasFile(e)) e.preventDefault(); });
+  document.addEventListener('drop', (e) => {
+    if (!hasFile(e)) return;
+    e.preventDefault();
+    depth = 0;
+    drop.hidden = true;
+    const f = [...e.dataTransfer.files].find((x) => /\.(mid|midi|kar)$/i.test(x.name));
+    f ? studio.openFile(f) : toast('Chỉ mở được file .mid hoặc .midi.');
+  });
+}
+
 // ======================= Khởi động =======================
 mountKeyboard();
 updateDockHelp();
 renderAll();
+studio.show(P.midi, '');
 saveProject(P);
 hub.init().then(renderDevice);
 
@@ -1280,4 +1379,6 @@ window.__hoaam = {
   clock,
   live,
   hub,
+  studio,
+  adoptMidi,
 };

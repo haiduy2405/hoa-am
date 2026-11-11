@@ -33,6 +33,7 @@
       <button class="btn-quiet" id="btn-channels" type="button" aria-haspopup="dialog">
         <span>Kênh nhận</span><span class="pips" id="pips" aria-hidden="true"></span>
       </button>
+      <button class="btn-quiet" id="btn-midi-open" type="button">Mở file MIDI</button>
       <button class="btn-quiet" id="btn-library" type="button" aria-haspopup="dialog">Bản nhạc của tôi</button>
       <button class="btn-quiet" id="btn-settings" type="button" aria-haspopup="dialog">Cài đặt</button>
     </div>
@@ -137,6 +138,14 @@
         <button class="btn-quiet danger" id="btn-clear" type="button">Xóa hết hợp âm</button>
       </div>
     </section>
+
+    <section class="studio" id="studio" aria-labelledby="h-studio">
+      <div class="studio-top">
+        <h2 id="h-studio">Nhạc MIDI</h2>
+        <p class="hint">Mở file .mid, nghe, sửa từng nốt rồi tải về thành bài của bạn.</p>
+      </div>
+      <div id="studio-root"></div>
+    </section>
   </main>
 
   <footer class="dock">
@@ -153,12 +162,14 @@
 </div>
 
 <div class="editor" id="editor" hidden role="dialog" aria-label="Sửa hợp âm"></div>
+<div class="drop" id="drop" hidden><div>Thả file .mid vào đây để mở</div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <dialog id="dlg-device"><div class="dlg" id="dlg-device-body"></div></dialog>
 <dialog id="dlg-channels"><div class="dlg" id="dlg-channels-body"></div></dialog>
 <dialog id="dlg-settings"><div class="dlg" id="dlg-settings-body"></div></dialog>
 <dialog id="dlg-library"><div class="dlg" id="dlg-library-body"></div></dialog>
+<dialog id="dlg-chords"><div class="dlg" id="dlg-chords-body"></div></dialog>
 <dialog id="dlg-export"><div class="dlg" id="dlg-export-body"></div></dialog>
 
 <script type="module" src="js/app.js"></script>
