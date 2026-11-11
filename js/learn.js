@@ -9,6 +9,7 @@ const LEAD = 1200; // ms dẫn vào trước nốt đầu để kịp nhìn nố
 const EARLY = 320; // chế độ đợi: bấm sớm tối đa bấy nhiêu ms (theo thời gian bài) vẫn tính đúng
 const GAP = 40; // nốt cách nhau dưới ngần này ms được xem là một hợp âm
 const STORE = 'hoaam.learn';
+const PCT = Array.from({ length: 10 }, (_, i) => [(i + 1) / 10, `${(i + 1) * 10}%`]);
 
 const ROLES = [
   ['right', 'Tay phải'],
@@ -17,10 +18,16 @@ const ROLES = [
   ['back', 'Đệm, đàn tự chơi'],
   ['off', 'Tắt'],
 ];
-const DEF = { mode: 'wait', hands: 'R', speed: 1, look: 3000, kb: 'auto', names: true, others: true, split: 60 };
+const DEF = { mode: 'wait', hands: 'R', speed: 1, look: 3000, kb: 'auto', names: true, others: true, split: 60, vol: { R: 1, L: 1, B: 1 } };
 
 function loadSet() {
-  try { return { ...DEF, ...JSON.parse(localStorage.getItem(STORE) || '{}') }; } catch (e) { return { ...DEF }; }
+  let o = {};
+  try { o = JSON.parse(localStorage.getItem(STORE) || '{}'); } catch (e) { o = {}; }
+  const r = { ...DEF, ...o, vol: { ...DEF.vol, ...(o.vol || {}) } };
+  const tenth = (v, d) => (Number.isFinite(+v) ? Math.min(1, Math.max(0.1, Math.round(+v * 10) / 10)) : d);
+  r.speed = tenth(r.speed, 1);
+  for (const k of ['R', 'L', 'B']) r.vol[k] = tenth(r.vol[k], 1);
+  return r;
 }
 
 function defaultRoles(s) {
@@ -161,7 +168,7 @@ export function createLearn(env) {
         if (type !== 0xc0) hub.send(type === 0xd0 ? [type | c, d1] : [type | c, d1, d2], ts);
       } else {
         const c = song.parts[e.o.pi].channel & 15;
-        hub.send(e.on ? [0x90 | c, e.o.n, e.o.v] : [0x80 | c, e.o.n, 0], ts);
+        hub.send(e.on ? [0x90 | c, e.o.n, Math.max(1, Math.min(127, Math.round(e.o.v * set.vol[e.o.hand])))] : [0x80 | c, e.o.n, 0], ts);
       }
     }
     if (set.mode === 'rhythm') {
@@ -539,12 +546,16 @@ export function createLearn(env) {
         h('button', { type: 'button', class: 'btn-ghost small', text: 'Về đầu', onclick: () => { seek(0); resetStats(); running = false; silence(); renderPlay(); } }),
         els.seek, els.time,
         h('label', { class: 'sb-lbl' }, h('span', { text: 'Tốc độ' }),
-          sel('Tốc độ phát', [[0.25, '25%'], [0.5, '50%'], [0.75, '75%'], [1, '100%'], [1.25, '125%']], () => set.speed, (v) => { set.speed = +v; save(); }))),
+          sel('Tốc độ phát', PCT, () => set.speed, (v) => { set.speed = +v; save(); }))),
       h('div', { class: 'learn-row' },
         seg('Chế độ', [['watch', 'Xem'], ['wait', 'Đợi tôi'], ['rhythm', 'Theo nhịp']], () => set.mode, (v) => { set.mode = v; save(); resetStats(); rebuild(); }),
         seg('Tay tập', [['R', 'Tay phải'], ['L', 'Tay trái'], ['RL', 'Hai tay']], () => set.hands, (v) => { set.hands = v; save(); resetStats(); rebuild(); }),
         tog('Đàn chơi phần còn lại', () => set.others, (v) => { set.others = v; save(); rebuild(); }, 'Bật: đàn tự chơi tay không tập, đệm và trống'),
-        loopBtn, els.loopFields));
+        loopBtn, els.loopFields),
+      h('div', { class: 'learn-row' },
+        h('span', { class: 'sb-lbl', text: 'Âm lượng đàn tự chơi:' }),
+        ...[['R', 'Tay phải'], ['L', 'Tay trái'], ['B', 'Đệm, trống']].map(([k, t]) => h('label', { class: 'sb-lbl' }, h('span', { text: t }),
+          sel('Âm lượng ' + t, PCT, () => set.vol[k], (v) => { set.vol[k] = +v; save(); })))));
 
     els.canvas = h('canvas', { class: 'learn-canvas', 'aria-label': 'Nốt rơi xuống phím đàn' });
     els.stat = h('span', { class: 'hud-stat' });

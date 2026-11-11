@@ -43,7 +43,7 @@ Bấm **Học bài này** trong phòng nhạc MIDI. Nốt rơi xuống phím đ�
 - **Theo nhịp:** bài chạy đều, bạn bấm đúng nốt đúng lúc (sai lệch khoảng 0,2 giây) để ghi điểm, có chuỗi đúng liên tiếp và phần trăm chính xác.
 - **Xem:** đàn tự chơi cả bài, bạn nhìn nốt rơi để học trước.
 - Tập **tay phải**, **tay trái** hoặc **hai tay**. Mục **Phân tay** cho chọn phần nào là tay nào, hoặc chia một phần piano thành hai tay tại một nốt.
-- Tốc độ 25% đến 125%, lặp một đoạn theo ô nhịp, kéo thanh để tua, độ dài đường rơi, số phím, toàn màn hình (phím F), Space để dừng và tiếp tục, R về đầu.
+- Tốc độ và âm lượng đàn tự chơi (tay phải, tay trái, đệm) chọn trong 10 mốc từ 10% đến 100%. Lặp một đoạn theo ô nhịp, kéo thanh để tua, độ dài đường rơi, số phím, toàn màn hình (phím F), Space để dừng và tiếp tục, R về đầu.
 - Nốt bạn chơi nhận từ cổng MIDI vào của đàn, theo các kênh đã chọn ở **Kênh nhận** (mặc định kênh 1 đến 3).
 
 Giới hạn: không đọc file dùng mốc thời gian SMPTE, phát bài cần đàn nhận nốt MIDI từ USB (đàn phải bật và chọn đúng cổng ra), file tối đa 8 MB. Bài rất lớn có thể vượt dung lượng lưu tự động của trình duyệt, khi đó app báo và bạn nên tải .mid về.
