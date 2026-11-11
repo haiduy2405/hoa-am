@@ -25,7 +25,13 @@
 * { box-sizing: border-box; margin: 0; }
 html { color-scheme: dark; -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 body {
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(900px 520px at 8% -6%, rgba(227, 179, 92, 0.17), transparent 70%),
+    radial-gradient(800px 560px at 96% 4%, rgba(150, 125, 235, 0.24), transparent 70%),
+    radial-gradient(900px 600px at 70% 104%, rgba(111, 201, 179, 0.11), transparent 70%),
+    linear-gradient(180deg, #241c42 0%, #181326 46%, #121018 100%);
+  background-attachment: fixed;
   color: var(--ink);
   font: 400 16px/1.55 var(--sans);
   -webkit-font-smoothing: antialiased;
