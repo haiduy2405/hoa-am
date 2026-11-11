@@ -885,9 +885,15 @@ function enterFullscreen() {
   if (document.fullscreenElement || !el.requestFullscreen) return Promise.resolve();
   return el.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
 }
+let wantFull = true; // false sau khi người dùng tự thoát toàn màn hình, để không ép vào lại
+document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && view !== 'home') wantFull = false; });
+// Mở thẳng link Hợp âm/MIDI chưa được fullscreen: cú bấm hoặc phím đầu tiên (bất kỳ) sẽ vào toàn màn hình.
+const firstGesture = (e) => { if (view !== 'home' && wantFull && e.key !== 'Escape') enterFullscreen(); };
+document.addEventListener('pointerdown', firstGesture, true);
+document.addEventListener('keydown', firstGesture, true);
 function showView(name) {
   view = name;
-  if (name !== 'home') enterFullscreen();
+  if (name !== 'home') { wantFull = true; enterFullscreen(); }
   $('#view-home').hidden = name !== 'home';
   $('#tab-home').setAttribute('aria-selected', String(name === 'home'));
   if (name === 'home') renderHome();
@@ -1018,6 +1024,7 @@ window.addEventListener('beforeunload', () => { P.updated = Date.now(); saveProj
 
 // ======================= Nhạc MIDI =======================
 function adoptMidi(song, name) {
+  const wasLearning = !!(studio && studio.learn && studio.learn.isOpen());
   const fresh = !P.events.length && !P.midi && !P.title;
   if (!fresh) { saveProject(P); P = newProject(); }
   const blank = name === 'Bài mới';
@@ -1031,6 +1038,7 @@ function adoptMidi(song, name) {
   P.events = [];
   resetAfterSwitch();
   studio.show(song, name);
+  if (wasLearning && !blank) studio.openLearn(); // đang học mà đổi file thì học luôn bài mới
   const ids = song.parts.filter((p) => p.channel !== 9 && p.notes.length).map((p) => p.id);
   let msg = blank ? 'Đã tạo bài trống. Bấm đúp vào piano roll để thêm nốt đầu tiên.' : 'Đã mở file MIDI. Nối đàn rồi bấm Phát để nghe.';
   if (ids.length) {

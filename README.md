@@ -100,6 +100,7 @@ Test phủ nhận diện hợp âm, đoán tông, số La Mã, gợi ý, voicing
 
 ## Chạy như app
 
-- Bấm sang tab **Hợp âm** hoặc **Nhạc MIDI** thì cả trang vào toàn màn hình (trình duyệt cần một cú bấm của bạn mới cho). Esc để thoát.
+- Bấm sang tab **Hợp âm** hoặc **Nhạc MIDI** thì cả trang vào toàn màn hình (trình duyệt cần một cú bấm của bạn mới cho). Mở thẳng link thì cú bấm chuột hoặc phím bất kỳ đầu tiên sẽ vào toàn màn hình. Esc để thoát, thoát rồi thì không bị ép vào lại.
 - Không bôi đen, không nhấp đúp chọn chữ, không menu chuột phải (trừ trong ô nhập chữ như lời bài).
 - **Cài app**: bấm nút "Cài app" ở thanh trên (Chrome/Edge), hoặc menu trình duyệt > Cài đặt ứng dụng. Mở từ biểu tượng là toàn màn hình luôn. Trên iPhone/iPad: Chia sẻ > Thêm vào Màn hình chính (chạy toàn màn hình nhưng iOS không có nút Cài app).
+- Đang ở màn **Học bài** vẫn đổi được file MIDI bằng nút "Mở file khác", không cần gỡ bài cũ.

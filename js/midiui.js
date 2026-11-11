@@ -34,7 +34,7 @@ export function createStudio(env) {
   let focused = false;
   let fileName = '';
   const els = {};
-  const learn = createLearn({ h, hub, toast: (m) => env.toast(m), noteLabel: (n) => env.noteLabel(n), openDevice: () => env.openDevice(), acceptCh: (c) => env.acceptCh(c) });
+  const learn = createLearn({ h, hub, toast: (m) => env.toast(m), noteLabel: (n) => env.noteLabel(n), openDevice: () => env.openDevice(), acceptCh: (c) => env.acceptCh(c), pickFile: () => pickFile() });
 
   const player = new Player({
     hub,

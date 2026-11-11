@@ -929,7 +929,9 @@ export function createLearn(env) {
     els.panelBtn = h('button', { type: 'button', class: 'btn-ghost', text: 'Phân tay', onclick: () => { els.panel.hidden = !els.panel.hidden; } });
     const top = h('div', { class: 'learn-top' },
       h('button', { type: 'button', class: 'btn-ghost', text: '← Quay lại', onclick: close }),
-      els.title, h('span', { class: 'tools-spacer' }), els.out, els.panelBtn, els.full);
+      els.title, h('span', { class: 'tools-spacer' }), els.out,
+      h('button', { type: 'button', class: 'btn-ghost', text: 'Mở file khác', onclick: () => { if (running) toggle(); env.pickFile && env.pickFile(); } }),
+      els.panelBtn, els.full);
 
     els.play = h('button', { type: 'button', class: 'play', onclick: toggle });
     els.time = h('output', { class: 'learn-time' });

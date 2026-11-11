@@ -1,6 +1,6 @@
 {
   "name": "hoa-am",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "private": true,
   "type": "module",
   "description": "Dò hợp âm trực tiếp từ đàn organ qua Web MIDI",
