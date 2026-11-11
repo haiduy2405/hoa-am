@@ -11,16 +11,16 @@ const GAP = 40; // nốt cách nhau dưới ngần này ms được xem là mộ
 const STORE = 'hoaam.learn';
 const BEST = 'hoaam.learn.best';
 const LIGHT = { R: '#f6dca0', L: '#a6e6d6', B: '#c4bcd8' };
-const WIN = { perfect: 50, great: 100, good: 180 }; // cửa sổ chấm theo ms thực
+const WIN = { perfect: 70, great: 130, good: 220 }; // cửa sổ chấm theo ms thực
 const GRADES = {
   perfect: { t: 'PERFECT', col: '#f3cf88', pts: 300, acc: 1, gauge: 5 },
-  great: { t: 'GREAT', col: '#6fc9b3', pts: 200, acc: 0.85, gauge: 3 },
-  good: { t: 'GOOD', col: '#b9a4f0', pts: 100, acc: 0.55, gauge: 1.5 },
+  great: { t: 'GREAT', col: '#6fc9b3', pts: 200, acc: 0.9, gauge: 3 },
+  good: { t: 'GOOD', col: '#b9a4f0', pts: 100, acc: 0.65, gauge: 1.5 },
 };
 const FEVER_MS = 8000;
 const MILESTONES = new Set([10, 25, 50, 100, 150, 200, 300, 500]);
 const newStats = (groups = 0) => ({ hit: 0, miss: 0, wrong: 0, combo: 0, best: 0, groups, score: 0, perfect: 0, great: 0, good: 0, gauge: 0, fever: false });
-const rankOf = (acc) => (acc >= 0.95 ? 'S' : acc >= 0.85 ? 'A' : acc >= 0.7 ? 'B' : acc >= 0.5 ? 'C' : 'D');
+const rankOf = (acc) => (acc >= 0.93 ? 'S' : acc >= 0.82 ? 'A' : acc >= 0.66 ? 'B' : acc >= 0.45 ? 'C' : 'D');
 const RANK_TEXT = { S: 'Xuất sắc!', A: 'Rất tốt!', B: 'Khá tốt', C: 'Cố thêm chút nữa', D: 'Luyện thêm nhé' };
 const SERIF = '"Newsreader", Georgia, serif';
 const SANS = '"Be Vietnam Pro", system-ui, sans-serif';
@@ -78,7 +78,7 @@ export function createLearn(env) {
   let pos = -LEAD, running = false, waiting = false, finished = false, last = 0;
   let gi = 0, ri = 0, ap = 0;
   let stats = newStats();
-  const fx = { parts: [], rings: [], beams: [], pop: null, banner: null, comboT: 0, flashT: 0, lastPop: 0, goT: 0 };
+  const fx = { parts: [], rings: [], beams: [], pop: null, banner: null, comboT: 0, flashT: 0, lastPop: 0, goT: 0, sparks: [] };
   let shownScore = 0;
   const keys = new Map(); // phím người chơi: { col, held, until }
   let open = false, timer = 0, raf = 0, dragging = false, warnedOut = false;
@@ -157,7 +157,7 @@ export function createLearn(env) {
     waiting = false;
   }
   const loopMs = () => ({ a: clock.tickToMs(Math.max(0, loop.a - 1) * bb * song.ppq), b: clock.tickToMs(Math.max(loop.a, loop.b) * bb * song.ppq) });
-  function clearFx() { fx.parts.length = 0; fx.rings.length = 0; fx.beams.length = 0; fx.pop = null; fx.banner = null; fx.flashT = 0; fx.goT = 0; }
+  function clearFx() { fx.parts.length = 0; fx.rings.length = 0; fx.beams.length = 0; fx.pop = null; fx.banner = null; fx.flashT = 0; fx.goT = 0; fx.sparks.length = 0; }
   function resetStats() { stats = newStats(groups.length); shownScore = 0; clearFx(); if (els.result) els.result.hidden = true; }
   const lead = () => Math.max(600, 3000 * set.speed); // đếm lùi 3, 2, 1 trước khi vào bài
 
@@ -167,7 +167,14 @@ export function createLearn(env) {
     const now = performance.now();
     if (now - fx.lastPop < 70 && fx.pop && fx.pop.text === text) return;
     fx.lastPop = now;
-    fx.pop = { text, col, sub, t: now };
+    fx.pop = { text, col, sub, t: now, kind: text === 'PERFECT' ? 'perfect' : '' };
+    if (fx.pop.kind && geo && fxOn()) {
+      fx.sparks.length = 0;
+      for (let i = 0; i < 9; i++) {
+        const a = Math.random() * Math.PI * 2, r = 70 + Math.random() * 170;
+        fx.sparks.push({ dx: Math.cos(a) * r * 1.5, dy: Math.sin(a) * r * 0.55, t0: now + Math.random() * 220, size: 8 + Math.random() * 16, life: 480 + Math.random() * 260 });
+      }
+    }
   }
   function burst(note, hand, grade) {
     if (!geo || !fxOn()) return;
@@ -293,10 +300,10 @@ export function createLearn(env) {
     const judged = stats.hit + stats.miss;
     if (game ? !judged : !stats.groups) return;
     let acc;
-    if (game) acc = Math.max(0, (stats.perfect + stats.great * GRADES.great.acc + stats.good * GRADES.good.acc) / judged - Math.min(0.25, stats.wrong * 0.01));
+    if (game) acc = Math.max(0, (stats.perfect + stats.great * GRADES.great.acc + stats.good * GRADES.good.acc) / judged - Math.min(0.2, stats.wrong * 0.006));
     else acc = stats.hit / (stats.hit + stats.wrong * 0.5);
     const rank = rankOf(acc);
-    const stars = acc >= 0.9 ? 3 : acc >= 0.7 ? 2 : acc >= 0.5 ? 1 : 0;
+    const stars = acc >= 0.88 ? 3 : acc >= 0.68 ? 2 : acc >= 0.45 ? 1 : 0;
     let record = false;
     if (game) {
       const prev = readBest();
@@ -517,16 +524,72 @@ export function createLearn(env) {
     }
     // chữ đánh giá
     if (fx.pop) {
+      const perfect = fx.pop.kind === 'perfect';
+      const life = perfect ? 980 : 720, hold = perfect ? 700 : 480;
       const age = now - fx.pop.t;
-      if (age < 720) {
-        const a = age < 480 ? 1 : 1 - (age - 480) / 240;
-        const sc = 1 + 0.45 * (1 - ease(age / 130));
-        g.save(); g.translate(cw / 2, hitY * 0.54); g.scale(sc, sc); g.globalAlpha = a;
-        g.fillStyle = fx.pop.col; g.shadowColor = fx.pop.col; g.shadowBlur = 18; g.textBaseline = 'middle';
-        const fs = Math.round(Math.min(78, Math.max(46, chh * 0.1)));
-        g.font = `italic 800 ${fs}px ${DISPLAY}`; g.fillText(fx.pop.text, 0, 0);
-        if (fx.pop.sub) { g.shadowBlur = 0; g.font = `italic 600 ${Math.round(fs * 0.34)}px ${DISPLAY}`; g.globalAlpha = a * 0.8; g.fillText(fx.pop.sub.toUpperCase(), 0, fs * 0.62); }
+      if (age < life) {
+        const a = age < hold ? 1 : 1 - (age - hold) / (life - hold);
+        const fs = Math.round(Math.min(78, Math.max(46, chh * 0.1)) * (perfect ? 1.18 : 1));
+        const sc = perfect ? 1 + 0.7 * (1 - ease(age / 150)) + 0.04 * Math.sin(age / 90) * (1 - age / life) : 1 + 0.45 * (1 - ease(age / 130));
+        const cy = hitY * 0.54;
+        g.save(); g.translate(cw / 2, cy);
+        g.font = `italic 800 ${fs}px ${DISPLAY}`; g.textBaseline = 'middle';
+        try { g.letterSpacing = perfect ? '3px' : '0px'; } catch (e) { /* bỏ qua */ }
+        if (perfect && fxOn()) {
+          // tia sáng xoay chậm phía sau chữ
+          const rot = age / 900, rl = fs * 3.2 * ease(age / 260);
+          g.save(); g.rotate(rot); g.globalAlpha = a * 0.5;
+          for (let i = 0; i < 12; i++) {
+            g.rotate(Math.PI / 6);
+            const gr = g.createLinearGradient(0, 0, rl, 0);
+            gr.addColorStop(0, 'rgba(255,232,170,0.55)'); gr.addColorStop(1, 'rgba(255,232,170,0)');
+            g.fillStyle = gr; g.beginPath(); g.moveTo(0, 0); g.lineTo(rl, -fs * 0.11); g.lineTo(rl, fs * 0.11); g.closePath(); g.fill();
+          }
+          g.restore();
+          // vệt sáng ngang
+          const fw = cw * 0.55 * ease(age / 240);
+          const fl = g.createLinearGradient(-fw, 0, fw, 0);
+          fl.addColorStop(0, 'rgba(255,240,200,0)'); fl.addColorStop(0.5, `rgba(255,248,225,${0.95 * a})`); fl.addColorStop(1, 'rgba(255,240,200,0)');
+          g.fillStyle = fl; g.fillRect(-fw, -1.5, fw * 2, 3);
+        }
+        g.scale(sc, sc); g.globalAlpha = a;
+        if (perfect) {
+          const hw = fs * 2.4;
+          const vg = g.createLinearGradient(0, -fs * 0.5, 0, fs * 0.5);
+          vg.addColorStop(0, '#fffdf0'); vg.addColorStop(0.45, '#f9dc8e'); vg.addColorStop(1, '#e0a23a');
+          g.shadowColor = '#f3b94d'; g.shadowBlur = 34;
+          g.lineWidth = Math.max(2, fs * 0.05); g.strokeStyle = 'rgba(120,70,10,0.55)'; g.lineJoin = 'round';
+          g.strokeText(fx.pop.text, 0, 0);
+          g.fillStyle = vg; g.textAlign = 'center'; g.fillText(fx.pop.text, 0, 0);
+          // dải sáng quét qua chữ
+          g.shadowBlur = 0;
+          const p = ease(Math.min(1, age / 520)) * 2.4 - 0.7;
+          const sh = g.createLinearGradient(-hw, 0, hw, 0);
+          const c0 = Math.min(1, Math.max(0, p - 0.12)), c1 = Math.min(1, Math.max(0, p)), c2 = Math.min(1, Math.max(0, p + 0.12));
+          sh.addColorStop(0, 'rgba(255,255,255,0)'); sh.addColorStop(c0, 'rgba(255,255,255,0)'); sh.addColorStop(c1, 'rgba(255,255,255,0.95)'); sh.addColorStop(c2, 'rgba(255,255,255,0)'); sh.addColorStop(1, 'rgba(255,255,255,0)');
+          g.fillStyle = sh; g.fillText(fx.pop.text, 0, 0);
+        } else {
+          g.fillStyle = fx.pop.col; g.shadowColor = fx.pop.col; g.shadowBlur = 18; g.textAlign = 'center';
+          g.fillText(fx.pop.text, 0, 0);
+        }
+        try { g.letterSpacing = '0px'; } catch (e) { /* bỏ qua */ }
+        g.shadowBlur = 0; g.textAlign = 'center';
+        if (fx.pop.sub) { g.font = `italic 600 ${Math.round(fs * 0.3)}px ${DISPLAY}`; g.globalAlpha = a * 0.8; g.fillStyle = fx.pop.col; g.fillText(fx.pop.sub.toUpperCase(), 0, fs * 0.66); }
         g.restore();
+        // sao lấp lánh quanh chữ PERFECT
+        if (perfect && fxOn()) {
+          for (const sp of fx.sparks) {
+            const k = (now - sp.t0) / sp.life;
+            if (k < 0 || k > 1) continue;
+            const tw = Math.sin(k * Math.PI);
+            const r = sp.size * tw;
+            const x = cw / 2 + sp.dx, y = cy + sp.dy;
+            g.save(); g.translate(x, y); g.rotate(k * 1.2); g.globalAlpha = tw; g.fillStyle = '#fff6d6'; g.shadowColor = '#f3cf88'; g.shadowBlur = 14;
+            g.beginPath();
+            for (let i = 0; i < 8; i++) { const rr2 = i % 2 ? r * 0.22 : r; const ang = (i * Math.PI) / 4; g.lineTo(Math.cos(ang) * rr2, Math.sin(ang) * rr2); }
+            g.closePath(); g.fill(); g.restore();
+          }
+        }
       }
     }
     // biểu ngữ FEVER, mốc combo
