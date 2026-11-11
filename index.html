@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Hòa Âm – Dò hợp âm trực tiếp từ đàn</title>
+  <meta name="description" content="Nối đàn organ qua USB, chơi đến đâu Hòa Âm đọc hợp âm đến đó. Ghi lại thành bản hợp âm, nghe lại, xuất file.">
+  <meta name="theme-color" content="#16111e">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,300..500;1,6..72,300..500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <a class="brand" href="./" aria-label="Hòa Âm, trang chủ">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="2" y="3" width="28" height="26" rx="5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M11.3 3v26M20.7 3v26" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="8.2" y="3" width="6.2" height="15" rx="1.4" fill="currentColor"/>
+        <rect x="17.6" y="3" width="6.2" height="15" rx="1.4" fill="currentColor"/>
+      </svg>
+      <span class="brand-name">Hòa Âm</span>
+    </a>
+    <div class="top-actions">
+      <button class="device" id="btn-device" type="button" aria-haspopup="dialog">
+        <span class="led" id="led" aria-hidden="true"></span>
+        <span id="device-label">Kết nối đàn</span>
+      </button>
+      <button class="btn-quiet" id="btn-channels" type="button" aria-haspopup="dialog">
+        <span>Kênh nhận</span><span class="pips" id="pips" aria-hidden="true"></span>
+      </button>
+      <button class="btn-quiet" id="btn-library" type="button" aria-haspopup="dialog">Bản nhạc của tôi</button>
+      <button class="btn-quiet" id="btn-settings" type="button" aria-haspopup="dialog">Cài đặt</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="stage" aria-label="Hợp âm đang chơi">
+      <div class="stage-live">
+        <div class="staff" aria-hidden="true"></div>
+        <div class="chord-live" id="chord-live" aria-live="polite" aria-atomic="true"></div>
+        <div class="notes-line">
+          <span id="notes-readout" class="notes-readout"></span>
+          <button type="button" class="link-btn" id="btn-notes-mode" title="Đổi cách gọi tên nốt"></button>
+          <button type="button" class="btn-capture" id="btn-capture" disabled>Thêm vào bản nhạc</button>
+        </div>
+      </div>
+
+      <div class="stage-side">
+        <section class="block" aria-labelledby="h-alt">
+          <h2 id="h-alt">Cách đọc khác</h2>
+          <ol class="alt-list" id="alt-list"></ol>
+        </section>
+        <section class="block" aria-labelledby="h-ana">
+          <h2 id="h-ana">Vị trí trong tông</h2>
+          <div id="analysis" class="analysis"></div>
+        </section>
+      </div>
+
+      <section class="suggest" aria-labelledby="h-sug">
+        <div class="suggest-head">
+          <h2 id="h-sug">Hợp âm tiếp theo</h2>
+          <p id="suggest-hint" class="hint"></p>
+        </div>
+        <div class="suggest-list" id="suggest-list"></div>
+      </section>
+    </section>
+
+    <section class="transport" aria-label="Ghi và phát">
+      <div class="tp-group">
+        <button class="rec" id="btn-rec" type="button" aria-pressed="false"><span class="rec-dot" aria-hidden="true"></span><span id="rec-label">Ghi</span></button>
+        <button class="play" id="btn-play" type="button" aria-pressed="false">
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path id="play-icon" d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg>
+          <span id="play-label">Phát</span>
+        </button>
+      </div>
+      <div class="tp-group tempo">
+        <button class="step" id="bpm-down" type="button" aria-label="Giảm tempo">−</button>
+        <label class="bpm"><input id="bpm" type="number" min="30" max="260" inputmode="numeric" aria-label="Tempo, nhịp mỗi phút"><span>BPM</span></label>
+        <button class="step" id="bpm-up" type="button" aria-label="Tăng tempo">+</button>
+        <button class="btn-quiet small" id="btn-tap" type="button">Gõ nhịp</button>
+      </div>
+      <div class="tp-group">
+        <label class="field">Nhịp
+          <select id="sel-beats">
+            <option value="2">2/4</option><option value="3">3/4</option><option value="4">4/4</option>
+            <option value="5">5/4</option><option value="6">6/4</option>
+          </select>
+        </label>
+        <div class="beat-dots" id="beat-dots" aria-hidden="true"></div>
+      </div>
+      <div class="tp-group">
+        <button class="toggle" id="t-metro" type="button" aria-pressed="true">Metronome</button>
+        <button class="toggle" id="t-count" type="button" aria-pressed="true">Đếm vào 1 ô nhịp</button>
+        <button class="toggle" id="t-loop" type="button" aria-pressed="false">Lặp</button>
+      </div>
+      <div class="tp-group">
+        <label class="field">Làm tròn nhịp
+          <select id="sel-quant">
+            <option value="0.25">Tự do</option>
+            <option value="0.5">Nửa phách</option>
+            <option value="1">1 phách</option>
+            <option value="half">Nửa ô nhịp</option>
+            <option value="bar">1 ô nhịp</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section class="sheet-wrap" id="sheet-wrap" aria-label="Bản hợp âm">
+      <div class="sheet-head">
+        <input id="title" class="title" type="text" placeholder="Đặt tên bài" aria-label="Tên bài" autocomplete="off" maxlength="80">
+        <div class="sheet-tools">
+          <label class="field">Tông
+            <select id="sel-key" aria-label="Tông của bài"></select>
+          </label>
+          <div class="stepper" role="group" aria-label="Chuyển tông">
+            <span class="stepper-label">Chuyển tông</span>
+            <button class="step" id="tr-down" type="button" aria-label="Hạ nửa cung">−</button>
+            <output id="tr-val">0</output>
+            <button class="step" id="tr-up" type="button" aria-label="Nâng nửa cung">+</button>
+          </div>
+          <button class="toggle" id="t-roman" type="button" aria-pressed="true">Số La Mã</button>
+          <button class="btn-quiet" id="btn-undo" type="button" title="Ctrl+Z">Hoàn tác</button>
+          <button class="btn-quiet" id="btn-redo" type="button" title="Ctrl+Shift+Z">Làm lại</button>
+          <button class="btn-primary" id="btn-export" type="button" aria-haspopup="dialog">Xuất file</button>
+        </div>
+      </div>
+      <p class="key-note" id="key-note"></p>
+      <div class="sheet" id="sheet"></div>
+      <div class="sheet-foot">
+        <button class="btn-quiet" id="btn-addrow" type="button">Thêm một hàng</button>
+        <button class="btn-quiet danger" id="btn-clear" type="button">Xóa hết hợp âm</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="dock">
+    <div class="dock-bar">
+      <p class="dock-help" id="dock-help"></p>
+      <div class="oct" role="group" aria-label="Quãng tám bàn phím máy tính">
+        <button class="step" id="oct-down" type="button" aria-label="Xuống một quãng tám">−</button>
+        <output id="oct-val">C4</output>
+        <button class="step" id="oct-up" type="button" aria-label="Lên một quãng tám">+</button>
+      </div>
+    </div>
+    <div class="keyboard" id="keyboard" role="group" aria-label="Phím đàn"></div>
+  </footer>
+</div>
+
+<div class="editor" id="editor" hidden role="dialog" aria-label="Sửa hợp âm"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<dialog id="dlg-device"><div class="dlg" id="dlg-device-body"></div></dialog>
+<dialog id="dlg-channels"><div class="dlg" id="dlg-channels-body"></div></dialog>
+<dialog id="dlg-settings"><div class="dlg" id="dlg-settings-body"></div></dialog>
+<dialog id="dlg-library"><div class="dlg" id="dlg-library-body"></div></dialog>
+<dialog id="dlg-export"><div class="dlg" id="dlg-export-body"></div></dialog>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
