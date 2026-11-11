@@ -86,11 +86,12 @@ export function createLearn(env) {
   // ---------- Âm thanh đếm ngược: 4 tiếng bíp cách nhau 1 giây, tiếng đầu ở 0,25 giây ----------
   const COUNT_LEAD = 3250; // ms thực từ lúc bấm Bắt đầu tới lúc vào bài (khớp tiếng bíp thứ tư)
   let countAudio = null;
+  let cdMs = 0; // thời gian đếm ngược còn lại (ms thực). Đếm xong mới chạy bài.
   function playCount() {
     if (set.voice === false) return;
     try {
       if (!countAudio) { countAudio = new Audio('assets/countdown.mp3'); countAudio.preload = 'auto'; }
-      const elapsed = (lead() + pos) / set.speed / 1000; // đã đếm được bao lâu (khi tiếp tục sau tạm dừng)
+      const elapsed = (COUNT_LEAD - cdMs) / 1000; // đã đếm được bao lâu (khi tiếp tục sau tạm dừng)
       if (elapsed >= 4) return;
       countAudio.currentTime = Math.max(0, elapsed);
       const pr = countAudio.play();
@@ -164,6 +165,7 @@ export function createLearn(env) {
   function seek(ms) {
     silence();
     pos = ms <= 0 ? -lead() : ms;
+    cdMs = ms <= 0 ? COUNT_LEAD : 0;
     groups.forEach((g) => { g.done = g.ms < pos - 1e-6; g.hit.clear(); });
     gi = 0;
     while (gi < groups.length && groups[gi].done) gi++;
@@ -177,7 +179,8 @@ export function createLearn(env) {
   const loopMs = () => ({ a: clock.tickToMs(Math.max(0, loop.a - 1) * bb * song.ppq), b: clock.tickToMs(Math.max(loop.a, loop.b) * bb * song.ppq) });
   function clearFx() { fx.parts.length = 0; fx.rings.length = 0; fx.beams.length = 0; fx.pop = null; fx.banner = null; fx.flashT = 0; fx.goT = 0; fx.sparks.length = 0; }
   function resetStats() { stats = newStats(groups.length); shownScore = 0; clearFx(); if (els.result) els.result.hidden = true; }
-  const lead = () => Math.max(100, COUNT_LEAD * set.speed); // đếm lùi 3, 2, 1 trước khi vào bài
+  // Sau BẮT ĐẦU, nốt đầu tiên còn cần chừng ba giây để rơi xuống phím nên người chơi kịp đặt tay.
+  const lead = () => Math.max(300, Math.min(set.look * 0.85, 3000 * set.speed));
 
   // ---------- Hiệu ứng và chấm điểm ----------
   const fxOn = () => set.fx !== false;
@@ -270,6 +273,11 @@ export function createLearn(env) {
     const dt = Math.min(100, now - last);
     last = now;
     if (!running || !song) return;
+    if (cdMs > 0) { // đang đếm ngược: bài đứng yên, chưa gửi nốt nào
+      cdMs -= dt;
+      if (cdMs <= 0) { cdMs = 0; fx.goT = now; }
+      return;
+    }
     if (stats.fever) { stats.gauge -= (dt * 100) / FEVER_MS; if (stats.gauge <= 0) { stats.gauge = 0; stats.fever = false; } }
     let target = pos + dt * set.speed;
     while (gi < groups.length && groups[gi].done) gi++;
@@ -285,9 +293,9 @@ export function createLearn(env) {
       if (set.mode === 'rhythm') resetStats();
       seek(lm.a);
       if (pos < 0) pos = 0;
+      cdMs = 0;
       return;
     }
-    if (pos < 0 && target >= 0) fx.goT = now;
     pos = target;
     if (lm) cap = Math.min(cap, lm.b - 1e-3);
     // Gửi nốt tự chơi trước 40ms để đều nhịp
@@ -384,7 +392,7 @@ export function createLearn(env) {
     running = true;
     last = performance.now();
     renderPlay();
-    if (pos < 0) playCount();
+    if (cdMs > 0) playCount();
   }
 
   // ---------- Nốt từ đàn của người chơi ----------
@@ -518,8 +526,8 @@ export function createLearn(env) {
     g.globalAlpha = 1;
     g.textAlign = 'center';
     // đếm lùi 3, 2, 1 pop up giữa màn hình
-    if (running && pos < 0) {
-      const wall = -pos / set.speed / 1000;
+    if (running && cdMs > 0) {
+      const wall = cdMs / 1000;
       const n = Math.ceil(wall);
       if (n >= 1 && n <= 3) {
         const frac = wall - Math.floor(wall) || 1; // 1 → 0 trong mỗi giây
