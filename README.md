@@ -42,7 +42,8 @@ Bấm **Học bài này** trong phòng nhạc MIDI. Nốt rơi xuống phím đ�
 - **Đợi tôi:** bài đứng yên ở mỗi nốt hoặc hợp âm tay bạn cần chơi, bạn bấm đúng trên đàn thì bài mới chạy tiếp. Tay còn lại, đệm và trống do đàn tự chơi qua MIDI out.
 - **Thử thách** (chế độ game): bài chạy đều sau khi đếm ngược 3, 2, 1 to giữa màn hình (chế độ Đợi tôi cũng đếm ngược). Bạn bấm đúng nốt đúng lúc để ghi điểm.
   - Chấm theo độ lệch: PERFECT (trong 70 ms), GREAT (130 ms), GOOD (220 ms), quá thì MISS. Kèm nhãn Sớm hoặc Trễ.
-  - Điểm nhân theo chuỗi combo (×2 từ 10, ×3 từ 20, ×4 từ 30). Thanh Fever đầy thì vào Fever 8 giây, điểm nhân đôi; trượt nốt thì Fever dừng.
+  - **PERFECT liên tiếp thì điểm nhân ×2, ×3, ×4** (như Audition). Bấm GREAT, GOOD, trượt hoặc bấm sai nốt là về ×1. Một hợp âm nhiều nốt tính là một nhịp. Chuỗi combo vẫn hiện để bạn theo dõi nhưng không còn nhân điểm.
+  - **Fever:** thanh đầy thì vào Fever 8 giây, điểm nhân thêm đôi (đang ×4 thì thành ×8). Trượt nốt là Fever dừng.
   - Chữ PERFECT có hiệu ứng riêng: chữ vàng gradient, dải sáng quét qua, tia sáng xoay phía sau, vệt sáng ngang và sao lấp lánh.
   - Hiệu ứng: tia sáng từ phím, vòng sóng, hạt lấp lánh, loé đỏ khi trượt, viền hồng khi Fever. Có thể tắt hiệu ứng ở mục Phân tay.
   - Hết bài hiện hạng S, A, B, C, D, số sao, điểm đếm lên và kỷ lục riêng cho từng bài (theo tay tập và tốc độ), lưu trên trình duyệt.
