@@ -40,7 +40,12 @@ Phím đàn trên màn hình chỉ để nhìn, không phát tiếng. Hòa Âm k
 Bấm **Học bài này** trong phòng nhạc MIDI. Nốt rơi xuống phím đàn như Synthesia hay Piano Above All.
 
 - **Đợi tôi:** bài đứng yên ở mỗi nốt hoặc hợp âm tay bạn cần chơi, bạn bấm đúng trên đàn thì bài mới chạy tiếp. Tay còn lại, đệm và trống do đàn tự chơi qua MIDI out.
-- **Theo nhịp:** bài chạy đều, bạn bấm đúng nốt đúng lúc (sai lệch khoảng 0,2 giây) để ghi điểm, có chuỗi đúng liên tiếp và phần trăm chính xác.
+- **Thử thách** (chế độ game): bài chạy đều sau khi đếm 3, 2, 1. Bạn bấm đúng nốt đúng lúc để ghi điểm.
+  - Chấm theo độ lệch: PERFECT (trong 50 ms), GREAT (100 ms), GOOD (180 ms), quá thì MISS. Kèm nhãn Sớm hoặc Trễ.
+  - Điểm nhân theo chuỗi combo (×2 từ 10, ×3 từ 20, ×4 từ 30). Thanh Fever đầy thì vào Fever 8 giây, điểm nhân đôi; trượt nốt thì Fever dừng.
+  - Hiệu ứng: tia sáng từ phím, vòng sóng, hạt lấp lánh, loé đỏ khi trượt, viền hồng khi Fever. Có thể tắt hiệu ứng ở mục Phân tay.
+  - Hết bài hiện hạng S, A, B, C, D, số sao, điểm đếm lên và kỷ lục riêng cho từng bài (theo tay tập và tốc độ), lưu trên trình duyệt.
+  - Không có âm thanh hiệu ứng nào: mọi tiếng đều từ đàn của bạn.
 - **Xem:** đàn tự chơi cả bài, bạn nhìn nốt rơi để học trước.
 - Tập **tay phải**, **tay trái** hoặc **hai tay**. Mục **Phân tay** cho chọn phần nào là tay nào, hoặc chia một phần piano thành hai tay tại một nốt.
 - Tốc độ và âm lượng đàn tự chơi (tay phải, tay trái, đệm) chọn trong 10 mốc từ 10% đến 100%. Lặp một đoạn theo ô nhịp, kéo thanh để tua, độ dài đường rơi, số phím, toàn màn hình (phím F), Space để dừng và tiếp tục, R về đầu.

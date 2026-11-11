@@ -9,6 +9,21 @@ const LEAD = 1200; // ms dẫn vào trước nốt đầu để kịp nhìn nố
 const EARLY = 320; // chế độ đợi: bấm sớm tối đa bấy nhiêu ms (theo thời gian bài) vẫn tính đúng
 const GAP = 40; // nốt cách nhau dưới ngần này ms được xem là một hợp âm
 const STORE = 'hoaam.learn';
+const BEST = 'hoaam.learn.best';
+const LIGHT = { R: '#f6dca0', L: '#a6e6d6', B: '#c4bcd8' };
+const WIN = { perfect: 50, great: 100, good: 180 }; // cửa sổ chấm theo ms thực
+const GRADES = {
+  perfect: { t: 'PERFECT', col: '#f3cf88', pts: 300, acc: 1, gauge: 5 },
+  great: { t: 'GREAT', col: '#6fc9b3', pts: 200, acc: 0.85, gauge: 3 },
+  good: { t: 'GOOD', col: '#b9a4f0', pts: 100, acc: 0.55, gauge: 1.5 },
+};
+const FEVER_MS = 8000;
+const MILESTONES = new Set([10, 25, 50, 100, 150, 200, 300, 500]);
+const newStats = (groups = 0) => ({ hit: 0, miss: 0, wrong: 0, combo: 0, best: 0, groups, score: 0, perfect: 0, great: 0, good: 0, gauge: 0, fever: false });
+const rankOf = (acc) => (acc >= 0.95 ? 'S' : acc >= 0.85 ? 'A' : acc >= 0.7 ? 'B' : acc >= 0.5 ? 'C' : 'D');
+const RANK_TEXT = { S: 'Xuất sắc!', A: 'Rất tốt!', B: 'Khá tốt', C: 'Cố thêm chút nữa', D: 'Luyện thêm nhé' };
+const SERIF = '"Newsreader", Georgia, serif';
+const SANS = '"Be Vietnam Pro", system-ui, sans-serif';
 const PCT = Array.from({ length: 10 }, (_, i) => [(i + 1) / 10, `${(i + 1) * 10}%`]);
 
 const ROLES = [
@@ -18,7 +33,7 @@ const ROLES = [
   ['back', 'Đệm, đàn tự chơi'],
   ['off', 'Tắt'],
 ];
-const DEF = { mode: 'wait', hands: 'R', speed: 1, look: 3000, kb: 'auto', names: true, others: true, split: 60, vol: { R: 1, L: 1, B: 1 } };
+const DEF = { mode: 'wait', hands: 'R', speed: 1, look: 3000, kb: 'auto', names: true, others: true, split: 60, vol: { R: 1, L: 1, B: 1 }, fx: true };
 
 function loadSet() {
   let o = {};
@@ -54,7 +69,9 @@ export function createLearn(env) {
   let notes = [], groups = [], autoEv = [], maxDur = 0, total = 0;
   let pos = -LEAD, running = false, waiting = false, finished = false, last = 0;
   let gi = 0, ri = 0, ap = 0;
-  let stats = { hit: 0, miss: 0, wrong: 0, combo: 0, best: 0, groups: 0 };
+  let stats = newStats();
+  const fx = { parts: [], rings: [], beams: [], pop: null, banner: null, comboT: 0, flashT: 0, lastPop: 0 };
+  let shownScore = 0;
   const keys = new Map(); // phím người chơi: { col, held, until }
   let open = false, timer = 0, raf = 0, dragging = false, warnedOut = false;
   let loop = { on: false, a: 1, b: 4 };
@@ -96,7 +113,7 @@ export function createLearn(env) {
       const g = groups[groups.length - 1];
       if (g && n.ms - g.ms < GAP) { g.pitches.add(n.n); g.hands.set(n.n, n.hand); g.notes.push(n); } else groups.push({ ms: n.ms, pitches: new Set([n.n]), hands: new Map([[n.n, n.hand]]), notes: [n], hit: new Set(), done: false });
     }
-    stats = { hit: 0, miss: 0, wrong: 0, combo: 0, best: 0, groups: groups.length };
+    stats = newStats(groups.length);
     seek(Math.max(pos, 0) === 0 ? 0 : pos);
   }
 
@@ -120,7 +137,7 @@ export function createLearn(env) {
   // ---------- Tua ----------
   function seek(ms) {
     silence();
-    pos = ms <= 0 ? -LEAD : ms;
+    pos = ms <= 0 ? -lead() : ms;
     groups.forEach((g) => { g.done = g.ms < pos - 1e-6; g.hit.clear(); });
     gi = 0;
     while (gi < groups.length && groups[gi].done) gi++;
@@ -132,7 +149,72 @@ export function createLearn(env) {
     waiting = false;
   }
   const loopMs = () => ({ a: clock.tickToMs(Math.max(0, loop.a - 1) * bb * song.ppq), b: clock.tickToMs(Math.max(loop.a, loop.b) * bb * song.ppq) });
-  function resetStats() { stats = { hit: 0, miss: 0, wrong: 0, combo: 0, best: 0, groups: groups.length }; }
+  function clearFx() { fx.parts.length = 0; fx.rings.length = 0; fx.beams.length = 0; fx.pop = null; fx.banner = null; fx.flashT = 0; }
+  function resetStats() { stats = newStats(groups.length); shownScore = 0; clearFx(); if (els.result) els.result.hidden = true; }
+  const lead = () => (set.mode === 'rhythm' ? Math.max(600, 3000 * set.speed) : LEAD);
+
+  // ---------- Hiệu ứng và chấm điểm ----------
+  const fxOn = () => set.fx !== false;
+  function popup(text, col, sub = '') {
+    const now = performance.now();
+    if (now - fx.lastPop < 70 && fx.pop && fx.pop.text === text) return;
+    fx.lastPop = now;
+    fx.pop = { text, col, sub, t: now };
+  }
+  function burst(note, hand, grade) {
+    if (!geo || !fxOn()) return;
+    const k = geo.map.get(note);
+    if (!k) return;
+    const now = performance.now();
+    const x = k.x + k.w / 2, y = geo.hitY;
+    const col = grade === 'perfect' ? '#f3cf88' : COL[hand] || '#fff';
+    const count = grade === 'perfect' ? 22 : grade === 'great' ? 15 : 9;
+    for (let i = 0; i < count; i++) {
+      const a = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.15;
+      const sp = 0.14 + Math.random() * 0.36;
+      fx.parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, t0: now, life: 450 + Math.random() * 400, col: Math.random() < 0.35 ? '#ffffff' : col, s: 1.4 + Math.random() * 2.6 });
+    }
+    if (fx.parts.length > 420) fx.parts.splice(0, fx.parts.length - 420);
+    fx.rings.push({ x, y, t0: now, col, r: Math.max(26, k.w * 2.4) });
+    fx.beams.push({ x: k.x, w: k.w, t0: now, col });
+    if (fx.beams.length > 40) fx.beams.shift();
+  }
+  const banner = (text, col) => { fx.banner = { text, col, t: performance.now() }; };
+  function award(n, grade, d) {
+    const G = GRADES[grade];
+    const now = performance.now();
+    n.res = 'hit';
+    stats.hit++; stats[grade]++;
+    stats.combo++;
+    if (stats.combo > stats.best) stats.best = stats.combo;
+    const mult = Math.min(4, 1 + Math.floor(stats.combo / 10)) * (stats.fever ? 2 : 1);
+    stats.score += G.pts * mult;
+    if (stats.fever) stats.gauge = Math.min(100, stats.gauge + 2);
+    else {
+      stats.gauge = Math.min(100, stats.gauge + G.gauge);
+      if (stats.gauge >= 100) { stats.fever = true; banner('FEVER ×2', '#ffb4e4'); }
+    }
+    fx.comboT = now;
+    popup(G.t, G.col, grade === 'perfect' ? '' : d < 0 ? 'Sớm' : 'Trễ');
+    burst(n.n, n.hand, grade);
+    if (MILESTONES.has(stats.combo)) banner('COMBO ' + stats.combo, '#f3cf88');
+  }
+  function missNote(n) {
+    n.res = 'miss';
+    stats.miss++;
+    stats.combo = 0;
+    stats.gauge = 0;
+    stats.fever = false;
+    popup('MISS', BAD);
+    fx.flashT = performance.now();
+  }
+  function wrongKey(note) {
+    stats.wrong++;
+    stats.combo = 0;
+    if (!geo || !fxOn()) return;
+    const k = geo.map.get(note);
+    if (k) fx.rings.push({ x: k.x + k.w / 2, y: geo.hitY, t0: performance.now(), col: BAD, r: Math.max(20, k.w * 1.8) });
+  }
 
   // ---------- Vòng chạy ----------
   function step() {
@@ -140,6 +222,7 @@ export function createLearn(env) {
     const dt = Math.min(100, now - last);
     last = now;
     if (!running || !song) return;
+    if (stats.fever) { stats.gauge -= (dt * 100) / FEVER_MS; if (stats.gauge <= 0) { stats.gauge = 0; stats.fever = false; } }
     let target = pos + dt * set.speed;
     while (gi < groups.length && groups[gi].done) gi++;
     waiting = false;
@@ -172,10 +255,10 @@ export function createLearn(env) {
       }
     }
     if (set.mode === 'rhythm') {
-      const W = 220 * set.speed;
+      const W = WIN.good * set.speed;
       while (ri < notes.length && notes[ri].ms < pos - W) {
         const n = notes[ri++];
-        if (n.req && !n.res) { n.res = 'miss'; stats.miss++; stats.combo = 0; }
+        if (n.req && !n.res) missNote(n);
       }
     }
     if (pos >= total + 500 && !loop.on) finish();
@@ -186,15 +269,56 @@ export function createLearn(env) {
     waiting = false;
     silence();
     renderPlay();
-    env.toast('Hết bài. ' + summary());
+    showResult();
   }
-  function summary() {
-    if (set.mode === 'rhythm') {
-      const t = stats.hit + stats.miss;
-      return t ? `Đúng ${stats.hit}/${t} nốt (${Math.round((stats.hit / t) * 100)}%), chuỗi dài nhất ${stats.best}.` : '';
+
+  // ---------- Kỷ lục và màn kết quả ----------
+  const bestKey = () => `${(song && song.title) || title}|${notes.length}|${set.hands}|${set.speed}`;
+  function readBest() { try { return (JSON.parse(localStorage.getItem(BEST) || '{}') || {})[bestKey()] || null; } catch (e) { return null; } }
+  function writeBest(v) { try { const all = JSON.parse(localStorage.getItem(BEST) || '{}') || {}; all[bestKey()] = v; localStorage.setItem(BEST, JSON.stringify(all)); } catch (e) { /* bỏ qua */ } }
+  const fmt = (n) => Math.round(n).toLocaleString('vi-VN');
+  function showResult() {
+    if (set.mode === 'watch' || !els.result) return;
+    const game = set.mode === 'rhythm';
+    const judged = stats.hit + stats.miss;
+    if (game ? !judged : !stats.groups) return;
+    let acc;
+    if (game) acc = Math.max(0, (stats.perfect + stats.great * GRADES.great.acc + stats.good * GRADES.good.acc) / judged - Math.min(0.25, stats.wrong * 0.01));
+    else acc = stats.hit / (stats.hit + stats.wrong * 0.5);
+    const rank = rankOf(acc);
+    const stars = acc >= 0.9 ? 3 : acc >= 0.7 ? 2 : acc >= 0.5 ? 1 : 0;
+    let record = false;
+    if (game) {
+      const prev = readBest();
+      if (!prev || stats.score > prev.score) { record = true; writeBest({ score: stats.score, rank }); }
     }
-    if (set.mode === 'wait') return stats.groups ? `Qua ${stats.hit}/${stats.groups} nhóm nốt, bấm sai ${stats.wrong} lần.` : '';
-    return '';
+    const cell = (label, val, cls = '') => h('div', { class: 'rc-cell ' + cls }, h('b', { text: String(val) }), h('span', { text: label }));
+    const scoreEl = h('div', { class: 'rc-score', text: '0' });
+    els.result.replaceChildren(h('div', { class: 'result-card', role: 'dialog', 'aria-label': 'Kết quả' },
+      h('div', { class: 'rc-grade g-' + rank, text: rank }),
+      h('div', { class: 'rc-stars', 'aria-label': stars + ' trên 3 sao' }, ...[0, 1, 2].map((i) => h('span', { class: i < stars ? 'on' : '', text: '★' }))),
+      h('h3', { text: RANK_TEXT[rank] }),
+      game ? scoreEl : null,
+      game && record ? h('span', { class: 'rc-record', text: 'Kỷ lục mới' }) : null,
+      game ? h('div', { class: 'rc-grid' },
+        cell('Perfect', stats.perfect, 'p'), cell('Great', stats.great, 'g'), cell('Good', stats.good, 'o'),
+        cell('Miss', stats.miss, 'm'), cell('Chuỗi dài nhất', stats.best), cell('Chính xác', Math.round(acc * 100) + '%'))
+        : h('div', { class: 'rc-grid' }, cell('Nhóm nốt đã qua', `${stats.hit}/${stats.groups}`), cell('Bấm sai', stats.wrong), cell('Chính xác', Math.round(acc * 100) + '%')),
+      h('div', { class: 'rc-actions' },
+        h('button', { type: 'button', class: 'btn-primary', text: 'Chơi lại', onclick: () => { els.result.hidden = true; seek(0); resetStats(); toggle(); } }),
+        h('button', { type: 'button', class: 'btn-ghost', text: 'Đóng', onclick: () => { els.result.hidden = true; } }))));
+    els.result.hidden = false;
+    if (game) {
+      const t0 = performance.now();
+      const tick = () => {
+        const k = Math.min(1, (performance.now() - t0) / 900);
+        scoreEl.textContent = fmt(stats.score * (1 - Math.pow(1 - k, 3)));
+        if (k < 1 && !els.result.hidden) requestAnimationFrame(tick);
+      };
+      tick();
+    }
+    const b = els.result.querySelector('.btn-primary');
+    if (b) b.focus({ preventScroll: true });
   }
 
   function toggle() {
@@ -228,18 +352,28 @@ export function createLearn(env) {
         if (g.pitches.has(e.note)) {
           col = COL[g.hands.get(e.note)];
           g.hit.add(e.note);
-          if (g.hit.size >= g.pitches.size) { g.done = true; g.notes.forEach((x) => { x.res = 'hit'; }); stats.hit++; stats.combo++; stats.best = Math.max(stats.best, stats.combo); }
-        } else { col = BAD; stats.wrong++; stats.combo = 0; }
+          if (g.hit.size >= g.pitches.size) {
+            g.done = true; g.notes.forEach((x) => { x.res = 'hit'; burst(x.n, x.hand, 'great'); });
+            stats.hit++; stats.combo++; stats.best = Math.max(stats.best, stats.combo);
+            fx.comboT = t; popup('Đúng', GRADES.great.col);
+            if (MILESTONES.has(stats.combo)) banner('CHUỖI ' + stats.combo, '#f3cf88');
+          }
+        } else { col = BAD; wrongKey(e.note); }
       }
     } else if (running && set.mode === 'rhythm') {
-      const W = 220 * set.speed;
+      const W = WIN.good * set.speed;
       let best = null;
       for (let i = ri; i < notes.length && notes[i].ms <= pos + W; i++) {
         const n = notes[i];
         if (!n.req || n.res || n.n !== e.note || Math.abs(n.ms - pos) > W) continue;
         if (!best || Math.abs(n.ms - pos) < Math.abs(best.ms - pos)) best = n;
       }
-      if (best) { best.res = 'hit'; col = COL[best.hand]; stats.hit++; stats.combo++; stats.best = Math.max(stats.best, stats.combo); } else { col = BAD; stats.wrong++; stats.combo = 0; }
+      if (best) {
+        const d = (pos - best.ms) / set.speed;
+        const ad = Math.abs(d);
+        col = COL[best.hand];
+        award(best, ad <= WIN.perfect ? 'perfect' : ad <= WIN.great ? 'great' : 'good', d);
+      } else { col = BAD; wrongKey(e.note); }
     }
     keys.set(e.note, { col: col || '#fff3d6', held: true, until: 0, t });
   }
@@ -291,6 +425,96 @@ export function createLearn(env) {
   const rr = (g, x, y, w, hh, r) => { r = Math.min(r, w / 2, hh / 2); g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + hh, r); g.arcTo(x + w, y + hh, x, y + hh, r); g.arcTo(x, y + hh, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); };
   const shortName = (n) => env.noteLabel(n).replace(/-?\d+$/, '');
 
+  const hexA = (hex, a) => { const v = parseInt(hex.slice(1), 16); return `rgba(${v >> 16},${(v >> 8) & 255},${v & 255},${a})`; };
+  const ease = (k) => 1 - Math.pow(1 - Math.min(1, Math.max(0, k)), 3);
+
+  function drawOver(g, now) {
+    const { hitY } = geo;
+    const game = set.mode === 'rhythm';
+    // viền sáng khi Fever
+    if (game && stats.fever) {
+      const a = 0.2 + 0.07 * Math.sin(now / 220);
+      for (const side of [0, 1]) {
+        const gr = g.createLinearGradient(side ? cw : 0, 0, side ? cw - 150 : 150, 0);
+        gr.addColorStop(0, `rgba(240,120,200,${a})`); gr.addColorStop(1, 'rgba(240,120,200,0)');
+        g.fillStyle = gr; g.fillRect(side ? cw - 150 : 0, 0, 150, hitY);
+      }
+    }
+    // loé đỏ khi trượt
+    if (fx.flashT && now - fx.flashT < 340) {
+      const a = 0.24 * (1 - (now - fx.flashT) / 340);
+      const gr = g.createLinearGradient(0, hitY - 170, 0, hitY);
+      gr.addColorStop(0, 'rgba(238,108,96,0)'); gr.addColorStop(1, `rgba(238,108,96,${a})`);
+      g.fillStyle = gr; g.fillRect(0, hitY - 170, cw, 170);
+    }
+    // vòng sóng
+    for (let i = fx.rings.length - 1; i >= 0; i--) {
+      const r = fx.rings[i], age = now - r.t0;
+      if (age > 460) { fx.rings.splice(i, 1); continue; }
+      const k = age / 460;
+      g.globalAlpha = (1 - k) * 0.9; g.strokeStyle = r.col; g.lineWidth = 2.5 * (1 - k) + 0.5;
+      g.beginPath(); g.ellipse(r.x, r.y, r.r * ease(k), r.r * 0.36 * ease(k), 0, 0, Math.PI * 2); g.stroke();
+    }
+    // hạt lấp lánh
+    for (let i = fx.parts.length - 1; i >= 0; i--) {
+      const q = fx.parts[i], age = now - q.t0;
+      if (age > q.life) { fx.parts.splice(i, 1); continue; }
+      const x = q.x + q.vx * age, y = q.y + q.vy * age + 0.0006 * age * age * 0.5;
+      g.globalAlpha = 1 - age / q.life;
+      g.fillStyle = q.col;
+      g.beginPath(); g.arc(x, y, q.s * (1 - 0.4 * age / q.life), 0, Math.PI * 2); g.fill();
+    }
+    g.globalAlpha = 1;
+    g.textAlign = 'center';
+    // đếm lùi 3, 2, 1
+    if (game && running && pos < 0) {
+      const wall = -pos / set.speed / 1000;
+      const n = Math.ceil(wall);
+      if (n >= 1 && n <= 3) {
+        const frac = wall - Math.floor(wall) || 1;
+        g.save(); g.translate(cw / 2, hitY * 0.42); g.scale(0.85 + 0.35 * frac, 0.85 + 0.35 * frac);
+        g.globalAlpha = Math.min(1, frac * 2.4); g.fillStyle = '#f4efe7'; g.shadowColor = '#e3b35c'; g.shadowBlur = 30;
+        g.font = `300 120px ${SERIF}`; g.textBaseline = 'middle'; g.fillText(String(n), 0, 0); g.restore();
+      }
+    }
+    // số chuỗi (combo)
+    if (stats.combo >= 3 && set.mode !== 'watch') {
+      const sc = 1 + 0.28 * Math.max(0, 1 - (now - fx.comboT) / 170);
+      g.save(); g.translate(cw / 2, hitY * 0.27); g.scale(sc, sc);
+      g.textBaseline = 'alphabetic';
+      g.fillStyle = 'rgba(244,239,231,0.55)'; g.font = `600 12px ${SANS}`;
+      g.fillText(game && stats.fever ? 'FEVER' : set.mode === 'wait' ? 'CHUỖI' : 'COMBO', 0, -40);
+      g.font = `300 66px ${SERIF}`; g.fillStyle = game && stats.fever ? '#ffc6ea' : '#f4efe7';
+      g.shadowColor = game && stats.fever ? '#f078c8' : '#e3b35c'; g.shadowBlur = 22;
+      g.fillText(String(stats.combo), 0, 14); g.restore();
+    }
+    // chữ đánh giá
+    if (fx.pop) {
+      const age = now - fx.pop.t;
+      if (age < 720) {
+        const a = age < 480 ? 1 : 1 - (age - 480) / 240;
+        const sc = 1 + 0.45 * (1 - ease(age / 130));
+        g.save(); g.translate(cw / 2, hitY * 0.5); g.scale(sc, sc); g.globalAlpha = a;
+        g.fillStyle = fx.pop.col; g.shadowColor = fx.pop.col; g.shadowBlur = 18; g.textBaseline = 'middle';
+        g.font = `600 ${fx.pop.text === 'Đúng' ? 26 : 30}px ${SANS}`; g.fillText(fx.pop.text, 0, 0);
+        if (fx.pop.sub) { g.shadowBlur = 0; g.font = `500 13px ${SANS}`; g.globalAlpha = a * 0.75; g.fillText(fx.pop.sub, 0, 26); }
+        g.restore();
+      }
+    }
+    // biểu ngữ FEVER, mốc combo
+    if (fx.banner) {
+      const age = now - fx.banner.t;
+      if (age < 1100) {
+        const a = age < 760 ? 1 : 1 - (age - 760) / 340;
+        const sc = 1.35 - 0.35 * ease(age / 180);
+        g.save(); g.translate(cw / 2, hitY * 0.68); g.scale(sc, sc); g.globalAlpha = a;
+        g.fillStyle = fx.banner.col; g.shadowColor = fx.banner.col; g.shadowBlur = 28; g.textBaseline = 'middle';
+        g.font = `300 44px ${SERIF}`; g.fillText(fx.banner.text, 0, 0); g.restore();
+      }
+    }
+    g.textAlign = 'start'; g.globalAlpha = 1;
+  }
+
   function draw() {
     if (!open || !geo || !song) return;
     const g = els.canvas.getContext('2d');
@@ -302,8 +526,13 @@ export function createLearn(env) {
 
     // nền và vạch quãng tám
     const bg = g.createLinearGradient(0, 0, 0, hitY);
-    bg.addColorStop(0, '#0f0d15'); bg.addColorStop(1, '#171320');
+    bg.addColorStop(0, '#0f0c1a'); bg.addColorStop(1, '#1a1430');
     g.fillStyle = bg; g.fillRect(0, 0, cw, chh);
+    { // làn xen kẽ rất nhạt cho dễ canh phím
+      let wi = 0;
+      g.fillStyle = 'rgba(255,255,255,0.018)';
+      for (let n = geo.lo; n <= geo.hi; n++) { const k = map.get(n); if (k.black) continue; if (wi++ % 2) g.fillRect(k.x, 0, k.w, hitY); }
+    }
     g.lineWidth = 1;
     for (let n = geo.lo; n <= geo.hi; n++) {
       if (n % 12 !== 0 || BLACK.has(n % 12)) continue;
@@ -334,6 +563,16 @@ export function createLearn(env) {
       for (const m of [lm.a, lm.b]) { const y = yOf(m); if (y >= 0 && y <= hitY) g.fillRect(0, y - 1, cw, 2); }
     }
 
+    // tia sáng từ phím vừa chạm
+    for (let bi = fx.beams.length - 1; bi >= 0; bi--) {
+      const b = fx.beams[bi], age = now - b.t0;
+      if (age > 520) { fx.beams.splice(bi, 1); continue; }
+      const a = 0.42 * (1 - age / 520);
+      const gr = g.createLinearGradient(0, hitY, 0, hitY - 190);
+      gr.addColorStop(0, hexA(b.col, a)); gr.addColorStop(1, hexA(b.col, 0));
+      g.fillStyle = gr; g.fillRect(b.x, hitY - 190, b.w, 190);
+    }
+
     // nốt rơi
     const lit = new Map();
     const need = new Map();
@@ -353,12 +592,16 @@ export function createLearn(env) {
       const col = COL[n.hand];
       const done = n.res === 'hit';
       const missed = n.res === 'miss';
+      if (done && set.mode === 'rhythm') continue; // nốt trúng thì tan đi
       const sounding = n.ms <= pos && pos < n.end;
       const inset = k.black ? 1 : 1.5;
       const x = k.x + inset, w = Math.max(3, k.w - inset * 2);
       g.globalAlpha = missed ? 0.25 : n.req ? 1 : set.mode === 'watch' ? 0.95 : 0.55;
-      g.fillStyle = missed ? '#6b6478' : col;
+      if (missed) g.fillStyle = '#6b6478';
+      else { const gr = g.createLinearGradient(0, yb - hh, 0, yb); gr.addColorStop(0, LIGHT[n.hand]); gr.addColorStop(1, col); g.fillStyle = gr; }
+      if (n.req && !missed && !done && n.ms - pos < 700 && n.ms > pos - 60) { g.shadowColor = col; g.shadowBlur = 16; }
       rr(g, x, yb - hh, w, hh, 6); g.fill();
+      g.shadowBlur = 0;
       if (n.req) { g.globalAlpha = 0.55; g.strokeStyle = 'rgba(255,255,255,0.55)'; g.lineWidth = 1; rr(g, x + 0.5, yb - hh + 0.5, w - 1, hh - 1, 6); g.stroke(); }
       if (done || sounding) { g.globalAlpha = 0.28; g.fillStyle = '#fff'; rr(g, x, yb - hh, w, hh, 6); g.fill(); }
       g.globalAlpha = 1;
@@ -416,6 +659,7 @@ export function createLearn(env) {
       g.globalAlpha = 1;
     }
     g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillRect(0, hitY + kbH - 1, cw, 1);
+    drawOver(g, now);
   }
 
   function frame() {
@@ -439,21 +683,36 @@ export function createLearn(env) {
     if (waiting && groups[gi]) for (const n of groups[gi].pitches) if (!groups[gi].hit.has(n)) need.push(shortName(n));
     let text = '';
     if (set.mode === 'wait') text = stats.groups ? `Đã qua ${stats.hit}/${stats.groups}  ·  Sai ${stats.wrong}` : 'Không có nốt cho tay đã chọn';
-    else if (set.mode === 'rhythm') { const t = stats.hit + stats.miss; text = `Đúng ${stats.hit}  ·  Trượt ${stats.miss}  ·  Sai ${stats.wrong}  ·  ${t ? Math.round((stats.hit / t) * 100) : 100}%`; }
+    else if (set.mode === 'rhythm') text = '';
     else text = 'Chế độ xem: đàn tự chơi cả bài';
-    const combo = stats.combo >= 3 && set.mode !== 'watch' ? `Chuỗi ${stats.combo}` : '';
+    const combo = '';
     const wait = waiting && need.length ? 'Đợi bạn: ' + need.join(' ') : '';
     const noIn = set.mode !== 'watch' && !hub.activeInput;
-    const k = [text, combo, wait, noIn, tickText(pos)].join('|');
+    const k = [text, combo, wait, noIn, set.mode, tickText(pos)].join('|');
     if (k !== hudKey) {
       hudKey = k;
       els.stat.textContent = text;
+      els.stat.hidden = !text;
+      els.game.hidden = set.mode !== 'rhythm';
+      els.bestEl.textContent = readBest() ? 'Kỷ lục ' + fmt(readBest().score) : '';
       els.combo.textContent = combo;
       els.combo.hidden = !combo;
       els.wait.textContent = wait;
       els.wait.hidden = !wait;
       els.banner.hidden = !noIn;
       els.time.textContent = tickText(pos);
+    }
+    if (set.mode === 'rhythm') {
+      shownScore += (stats.score - shownScore) * 0.22;
+      if (Math.abs(stats.score - shownScore) < 1) shownScore = stats.score;
+      const t = fmt(shownScore);
+      if (els.scoreEl.textContent !== t) els.scoreEl.textContent = t;
+      const mult = Math.min(4, 1 + Math.floor(stats.combo / 10)) * (stats.fever ? 2 : 1);
+      els.multEl.textContent = '×' + mult;
+      const judged = stats.hit + stats.miss;
+      els.accEl.textContent = judged ? Math.round(((stats.perfect + stats.great * GRADES.great.acc + stats.good * GRADES.good.acc) / judged) * 100) + '%' : '100%';
+      els.gaugeFill.style.width = stats.gauge.toFixed(1) + '%';
+      els.game.classList.toggle('fever', stats.fever);
     }
     if (!dragging && total > 0) els.seek.value = String(Math.max(0, Math.min(total, pos)));
   }
@@ -509,7 +768,8 @@ export function createLearn(env) {
         sel('Độ dài đường rơi', [[2000, 'Ngắn, rơi nhanh'], [3000, 'Vừa'], [4500, 'Dài'], [6500, 'Rất dài, rơi chậm']], () => set.look, (v) => { set.look = +v; save(); })),
       h('label', { class: 'lp-row' }, h('span', { class: 'lp-name', text: 'Số phím' }),
         sel('Số phím', [['auto', 'Vừa với bài'], ['61', '61 phím'], ['88', '88 phím']], () => set.kb, (v) => { set.kb = v; save(); layout(); })),
-      h('div', { class: 'lp-row' }, h('span', { class: 'lp-name', text: 'Tên nốt trên nốt rơi' }), tog('Hiện', () => set.names, (v) => { set.names = v; save(); })));
+      h('div', { class: 'lp-row' }, h('span', { class: 'lp-name', text: 'Tên nốt trên nốt rơi' }), tog('Hiện', () => set.names, (v) => { set.names = v; save(); })),
+      h('div', { class: 'lp-row' }, h('span', { class: 'lp-name', text: 'Hiệu ứng lấp lánh' }), tog('Bật', () => set.fx !== false, (v) => { set.fx = v; save(); if (!v) clearFx(); })));
   }
 
   function mount() {
@@ -548,7 +808,7 @@ export function createLearn(env) {
         h('label', { class: 'sb-lbl' }, h('span', { text: 'Tốc độ' }),
           sel('Tốc độ phát', PCT, () => set.speed, (v) => { set.speed = +v; save(); }))),
       h('div', { class: 'learn-row' },
-        seg('Chế độ', [['watch', 'Xem'], ['wait', 'Đợi tôi'], ['rhythm', 'Theo nhịp']], () => set.mode, (v) => { set.mode = v; save(); resetStats(); rebuild(); }),
+        seg('Chế độ', [['watch', 'Xem'], ['wait', 'Đợi tôi'], ['rhythm', 'Thử thách']], () => set.mode, (v) => { set.mode = v; save(); resetStats(); rebuild(); }),
         seg('Tay tập', [['R', 'Tay phải'], ['L', 'Tay trái'], ['RL', 'Hai tay']], () => set.hands, (v) => { set.hands = v; save(); resetStats(); rebuild(); }),
         tog('Đàn chơi phần còn lại', () => set.others, (v) => { set.others = v; save(); rebuild(); }, 'Bật: đàn tự chơi tay không tập, đệm và trống'),
         loopBtn, els.loopFields),
@@ -566,7 +826,19 @@ export function createLearn(env) {
       h('button', { type: 'button', class: 'btn-ghost small', text: 'Kết nối đàn', onclick: () => env.openDevice() }));
     els.panel = h('div', { class: 'learn-panel', hidden: true });
     els.hud = h('div', { class: 'learn-hud' }, els.stat, els.combo, els.wait);
-    els.stage = h('div', { class: 'learn-stage' }, els.canvas, els.hud, els.banner, els.panel);
+    els.scoreEl = h('output', { class: 'g-score', 'aria-label': 'Điểm', text: '0' });
+    els.multEl = h('span', { class: 'g-mult', text: '×1' });
+    els.accEl = h('span', { class: 'g-acc', text: '100%' });
+    els.bestEl = h('span', { class: 'g-best' });
+    els.gaugeFill = h('i', { class: 'g-fill' });
+    els.game = h('div', { class: 'game-hud', hidden: true },
+      h('div', { class: 'g-top' }, h('span', { class: 'g-lbl', text: 'Điểm' }), els.multEl),
+      els.scoreEl,
+      h('div', { class: 'g-gauge', title: 'Đầy thanh là vào Fever: điểm nhân đôi' }, els.gaugeFill, h('span', { class: 'g-gauge-lbl', text: 'FEVER' })),
+      h('div', { class: 'g-foot' }, h('span', { text: 'Chính xác' }), els.accEl),
+      els.bestEl);
+    els.result = h('div', { class: 'learn-result', hidden: true });
+    els.stage = h('div', { class: 'learn-stage' }, els.canvas, els.hud, els.game, els.banner, els.result, els.panel);
     els.root.append(top, deck, els.stage);
     document.body.append(els.root);
     new ResizeObserver(() => { if (open) layout(); }).observe(els.stage);
@@ -609,6 +881,7 @@ export function createLearn(env) {
     running = false;
     finished = false;
     keys.clear();
+    clearFx(); shownScore = 0; if (els.result) els.result.hidden = true;
     pos = 0;
     els.root.hidden = false;
     document.body.classList.add('learn-open');
@@ -648,6 +921,7 @@ export function createLearn(env) {
     isRunning: () => open && running,
     // dành cho kiểm thử
     debug: () => ({ pos, gi, groups: groups.length, waiting, stats: { ...stats }, mode: set.mode, hands: set.hands, notes: notes.length, running, need: groups[gi] ? [...groups[gi].pitches] : [], needMs: groups[gi] ? groups[gi].ms : null, roles: song ? song.parts.map((p) => [p.name, roles.get(p.id), p.channel]) : [], reqNotes: notes.filter((n) => n.req).length }),
+    peek: () => ({ pos, next: notes.find((n) => n.req && !n.res) || null, running }),
     layout,
   };
 }
