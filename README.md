@@ -35,6 +35,17 @@ Phím đàn trên màn hình chỉ để nhìn, không phát tiếng. Hòa Âm k
 5. **Lấy hợp âm vào bản nhạc** đọc hợp âm từ các phần bạn chọn. **Thêm phần hợp âm** làm ngược lại: biến bản hợp âm của bạn thành một phần đệm.
 6. **Tải file .mid** lưu bài đã sửa (nhiều track, giữ tempo, pedal, bánh pitch) để mở tiếp trong phần mềm thu âm.
 
+### Học bài theo nốt rơi
+
+Bấm **Học bài này** trong phòng nhạc MIDI. Nốt rơi xuống phím đàn như Synthesia hay Piano Above All.
+
+- **Đợi tôi:** bài đứng yên ở mỗi nốt hoặc hợp âm tay bạn cần chơi, bạn bấm đúng trên đàn thì bài mới chạy tiếp. Tay còn lại, đệm và trống do đàn tự chơi qua MIDI out.
+- **Theo nhịp:** bài chạy đều, bạn bấm đúng nốt đúng lúc (sai lệch khoảng 0,2 giây) để ghi điểm, có chuỗi đúng liên tiếp và phần trăm chính xác.
+- **Xem:** đàn tự chơi cả bài, bạn nhìn nốt rơi để học trước.
+- Tập **tay phải**, **tay trái** hoặc **hai tay**. Mục **Phân tay** cho chọn phần nào là tay nào, hoặc chia một phần piano thành hai tay tại một nốt.
+- Tốc độ 25% đến 125%, lặp một đoạn theo ô nhịp, kéo thanh để tua, độ dài đường rơi, số phím, toàn màn hình (phím F), Space để dừng và tiếp tục, R về đầu.
+- Nốt bạn chơi nhận từ cổng MIDI vào của đàn, theo các kênh đã chọn ở **Kênh nhận** (mặc định kênh 1 đến 3).
+
 Giới hạn: không đọc file dùng mốc thời gian SMPTE, phát bài cần đàn nhận nốt MIDI từ USB (đàn phải bật và chọn đúng cổng ra), file tối đa 8 MB. Bài rất lớn có thể vượt dung lượng lưu tự động của trình duyệt, khi đó app báo và bạn nên tải .mid về.
 
 ## Chạy trên máy
@@ -68,6 +79,7 @@ Test phủ nhận diện hợp âm, đoán tông, số La Mã, gợi ý, voicing
 | `js/songmidi.js` | Đọc và ghi file MIDI, sửa nốt, lấy hợp âm từ nốt |
 | `js/player.js` | Lập lịch phát bản MIDI qua MIDI out của đàn |
 | `js/roll.js` | Piano roll bằng canvas |
+| `js/learn.js` | Học bài: nốt rơi, chế độ đợi, theo nhịp, phân tay |
 | `js/midiui.js` | Giao diện phòng nhạc MIDI |
 | `js/store.js` | Lưu cài đặt và bản nhạc trên trình duyệt |
 | `js/app.js` | Giao diện và nối các phần lại |

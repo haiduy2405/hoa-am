@@ -913,8 +913,8 @@ document.addEventListener('keydown', (e) => {
   if (e.altKey || isTyping(e.target) || $('dialog[open]')) return;
   if (e.key === ' ') {
     if (view !== 'midi') return;
+    if (e.target.tagName === 'BUTTON') return; // để nút tự nhận phím Space
     e.preventDefault();
-    if (e.target.tagName === 'BUTTON') return;
     studio.togglePlay();
     return;
   }
@@ -1032,6 +1032,7 @@ studio = createStudio({
   adopt: adoptMidi,
   applyChords,
   noteLabel: (n) => noteLabel(n, false),
+  acceptCh: (ch) => S.channels.includes(ch),
   download, slug,
 });
 

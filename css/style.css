@@ -447,10 +447,50 @@ dialog::backdrop { background: rgba(8, 6, 13, 0.75); backdrop-filter: blur(3px);
 }
 
 /* ---------- In ra giấy hoặc PDF ---------- */
+/* ---- Học bài: nốt rơi ---- */
+.btn-ghost.accent { color: var(--brass-2); border-color: rgba(227, 179, 92, 0.55); }
+.btn-ghost.accent:hover { background: var(--brass-dim); }
+body.learn-open { overflow: hidden; }
+.learn { position: fixed; inset: 0; z-index: 120; background: var(--bg); display: flex; flex-direction: column; min-height: 0; }
+.learn-top { display: flex; align-items: center; gap: 10px; padding: 10px var(--pad); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.learn-title { font: 400 24px/1.2 var(--serif); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.learn-deck { display: grid; gap: 10px; padding: 12px var(--pad); background: var(--bg-2); border-bottom: 1px solid var(--line); }
+.learn-row { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; }
+.learn-row .play { flex-shrink: 0; }
+.learn-time { font: 400 15px/1 var(--sans); color: var(--ink-2); min-width: 108px; font-feature-settings: 'tnum'; }
+.learn-seek { flex: 1 1 180px; min-width: 120px; accent-color: var(--brass); height: 28px; }
+.loop-fields { display: inline-flex; align-items: center; gap: 8px; color: var(--ink-3); font-size: 14px; }
+.mini { width: 64px; min-height: 36px; padding: 4px 8px; background: var(--panel); border: 1px solid var(--line-2); border-radius: 10px; }
+.learn-stage { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+.learn-canvas { display: block; width: 100%; height: 100%; }
+.learn-hud { position: absolute; left: 14px; top: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; pointer-events: none; max-width: calc(100% - 28px); }
+.hud-stat { font-size: 14px; font-weight: 500; color: var(--ink); background: rgba(18, 16, 24, 0.78); padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line-2); backdrop-filter: blur(6px); }
+.hud-chip { font-size: 14px; font-weight: 600; color: #1b1408; background: var(--brass); padding: 6px 12px; border-radius: 999px; }
+.hud-chip.wait { background: var(--verd); }
+.learn-banner { position: absolute; left: 50%; top: 56px; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 14px; background: var(--panel-2); border: 1px solid rgba(238, 108, 96, 0.5); font-size: 14.5px; max-width: min(560px, calc(100% - 28px)); }
+.learn-panel { position: absolute; right: 12px; top: 12px; width: min(360px, calc(100% - 24px)); max-height: calc(100% - 24px); overflow: auto; background: var(--panel); border: 1px solid var(--line-2); border-radius: var(--r-md); padding: 14px; display: grid; gap: 10px; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5); }
+.lp-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.lp-sep { border-top: 1px solid var(--line); padding-top: 12px; }
+.lp-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.lp-name { font-size: 14.5px; color: var(--ink-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lp-row select { max-width: 190px; }
+@media (max-width: 760px) {
+  .learn-top { padding: 8px 12px; gap: 6px; }
+  .learn-top .btn-ghost, .learn-top .out-chip { min-height: 34px; padding: 5px 11px; font-size: 13px; }
+  .learn-title { display: none; }
+  .learn-deck { padding: 8px 12px; gap: 8px; }
+  .learn-row { gap: 8px; }
+  .learn-row .sb-lbl > span { display: none; }
+  .learn-time { min-width: 0; font-size: 13px; }
+  .learn .seg button, .learn .toggle { padding: 6px 10px; font-size: 13px; min-height: 34px; }
+  .learn-banner { top: 50px; font-size: 13px; }
+  .hud-stat, .hud-chip { font-size: 13px; padding: 5px 10px; }
+}
+
 @media print {
   :root { --ink: #111; --ink-2: #333; --ink-3: #666; --line: #ccc; --line-2: #999; --brass-2: #555; --brass: #555; --brass-dim: transparent; }
   body { background: #fff; color: #111; }
-  .top, .live, .suggest, #view-midi, .drop, .sheet-tools, .sheet-foot, .toast, .editor, dialog, .bar-empty, #btn-export { display: none !important; }
+  .learn, .top, .live, .suggest, #view-midi, .drop, .sheet-tools, .sheet-foot, .toast, .editor, dialog, .bar-empty, #btn-export { display: none !important; }
   .main { padding: 0; max-width: none; }
   .sheet-panel { padding: 0; border: 0; background: none; }
   .title { font-size: 28px; border: 0; color: #000; }

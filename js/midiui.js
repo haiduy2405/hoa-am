@@ -5,6 +5,7 @@ import {
 } from './songmidi.js';
 import { Player } from './player.js';
 import { PART_COLORS, Roll } from './roll.js';
+import { createLearn } from './learn.js';
 
 const GRIDS = [
   ['1', 'Nốt đen (1 phách)'],
@@ -33,6 +34,7 @@ export function createStudio(env) {
   let focused = false;
   let fileName = '';
   const els = {};
+  const learn = createLearn({ h, hub, toast: (m) => env.toast(m), noteLabel: (n) => env.noteLabel(n), openDevice: () => env.openDevice(), acceptCh: (c) => env.acceptCh(c) });
 
   const player = new Player({
     hub,
@@ -110,7 +112,8 @@ export function createStudio(env) {
     renderBar();
     roll && roll.draw();
   }
-  function togglePlay() { player.active ? stopPlay() : startPlay(); }
+  function togglePlay() { if (learn.isOpen()) { learn.toggle(); return; } player.active ? stopPlay() : startPlay(); }
+  function openLearn() { if (!song) return; stopPlay(); learn.open(song, song.title || fileName); }
   function startLoop() {
     cancelAnimationFrame(raf);
     const f = () => {
@@ -192,6 +195,7 @@ export function createStudio(env) {
         els.out = h('button', { type: 'button', class: 'out-chip', onclick: () => env.openDevice() }),
         btn('Mở file khác', pickFile, 'btn-ghost'),
         btn('Gỡ khỏi bài này', removeSong, 'btn-ghost danger'),
+        btn('Học bài này', openLearn, 'btn-ghost accent', { id: 'btn-learn', title: 'Nốt rơi, đợi bạn chơi đúng từng tay' }),
         btn('Toàn màn hình', toggleFull, 'btn-ghost', { id: 'btn-full', title: 'Phím tắt: F' }),
         btn('Tải file .mid', exportMid, 'btn-primary')));
     renderOut();
@@ -495,12 +499,12 @@ export function createStudio(env) {
   renderAll();
 
   return {
-    show, pickFile, openFile, togglePlay, stop: stopPlay, refreshDevice: renderOut, toggleFull, isFull: () => !!song && isFull(),
+    show, pickFile, openFile, togglePlay, stop: () => { learn.close(); stopPlay(); }, openLearn, learn, refreshDevice: renderOut, toggleFull, isFull: () => !!song && isFull(),
     fullEl: () => els.view,
-    isPlaying: () => player.active,
+    isPlaying: () => player.active || learn.isRunning(),
     isFocused: () => focused && !!song,
     hasSong: () => !!song,
-    undo: doUndo, redo: doRedo,
+    undo: () => (learn.isOpen() ? false : doUndo()), redo: () => (learn.isOpen() ? false : doRedo()),
     scrollIntoView: () => root.scrollIntoView({ behavior: 'smooth', block: 'start' }),
     resize: () => roll && roll.resize(),
   };
