@@ -34,7 +34,7 @@ const ROLES = [
   ['back', 'Đệm, đàn tự chơi'],
   ['off', 'Tắt'],
 ];
-const DEF = { mode: 'wait', hands: 'R', speed: 1, look: 3000, kb: 'auto', names: true, others: true, split: 60, vol: { R: 1, L: 1, B: 1 }, fx: true };
+const DEF = { mode: 'wait', hands: 'R', speed: 1, look: 3000, kb: 'auto', names: true, others: true, split: 60, vol: { R: 1, L: 1, B: 1 }, fx: true, voice: true };
 
 const QUIET = 0.4; // tay không tập tự chơi nhỏ lại để nghe rõ tay đang tập
 function handDefaults(hands, vol) {
@@ -79,7 +79,29 @@ export function createLearn(env) {
   let gi = 0, ri = 0, ap = 0;
   let stats = newStats();
   const fx = { parts: [], rings: [], beams: [], pop: null, banner: null, comboT: 0, flashT: 0, lastPop: 0, goT: 0, sparks: [] };
-  let shownScore = 0;
+  let shownScore = 0, spoken = 0, voice = null;
+
+  // ---------- Giọng đếm ngược (đọc bằng giọng tiếng Anh của trình duyệt) ----------
+  function pickVoice() {
+    try {
+      const v = window.speechSynthesis.getVoices();
+      voice = v.find((x) => /^en[-_]US/i.test(x.lang) && /google|natural|aria|jenny|samantha|zira|guy/i.test(x.name)) || v.find((x) => /^en/i.test(x.lang)) || null;
+    } catch (e) { voice = null; }
+  }
+  try { window.speechSynthesis.addEventListener('voiceschanged', pickVoice); pickVoice(); } catch (e) { /* trình duyệt không có giọng đọc */ }
+  function say(text) {
+    if (set.voice === false) return;
+    try {
+      const ss = window.speechSynthesis;
+      if (!ss) return;
+      ss.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'en-US'; u.rate = 1.1; u.pitch = 1.05; u.volume = 1;
+      if (voice) u.voice = voice;
+      ss.speak(u);
+    } catch (e) { /* bỏ qua */ }
+  }
+  const hush = () => { try { window.speechSynthesis.cancel(); } catch (e) { /* bỏ qua */ } };
   const keys = new Map(); // phím người chơi: { col, held, until }
   let open = false, timer = 0, raf = 0, dragging = false, warnedOut = false;
   let loop = { on: false, a: 1, b: 4 };
@@ -155,6 +177,7 @@ export function createLearn(env) {
     while (ap < autoEv.length && autoEv[ap].ms < pos - 1e-6) ap++;
     finished = false;
     waiting = false;
+    spoken = 0;
   }
   const loopMs = () => ({ a: clock.tickToMs(Math.max(0, loop.a - 1) * bb * song.ppq), b: clock.tickToMs(Math.max(loop.a, loop.b) * bb * song.ppq) });
   function clearFx() { fx.parts.length = 0; fx.rings.length = 0; fx.beams.length = 0; fx.pop = null; fx.banner = null; fx.flashT = 0; fx.goT = 0; fx.sparks.length = 0; }
@@ -254,7 +277,11 @@ export function createLearn(env) {
       if (pos < 0) pos = 0;
       return;
     }
-    if (pos < 0 && target >= 0) fx.goT = now;
+    if (pos < 0) {
+      const n = Math.ceil(-pos / set.speed / 1000);
+      if (n >= 1 && n <= 3 && n !== spoken) { spoken = n; say(['', 'One', 'Two', 'Three'][n]); }
+    }
+    if (pos < 0 && target >= 0) { fx.goT = now; say('Go!'); }
     pos = target;
     if (lm) cap = Math.min(cap, lm.b - 1e-3);
     // Gửi nốt tự chơi trước 40ms để đều nhịp
@@ -340,7 +367,7 @@ export function createLearn(env) {
 
   function toggle() {
     if (!song) return;
-    if (running) { running = false; waiting = false; silence(); renderPlay(); return; }
+    if (running) { running = false; waiting = false; silence(); hush(); renderPlay(); return; }
     if (!hub.activeOutput && !warnedOut) {
       warnedOut = true;
       env.toast(set.mode === 'watch' ? 'Chưa nối cổng MIDI ra nên đàn chưa phát tiếng. Bấm Kết nối đàn để chọn.' : 'Chưa nối cổng MIDI ra: phần đàn tự chơi sẽ im lặng. Bạn vẫn tập được.');
@@ -860,6 +887,7 @@ export function createLearn(env) {
       h('label', { class: 'lp-row' }, h('span', { class: 'lp-name', text: 'Số phím' }),
         sel('Số phím', [['auto', 'Vừa với bài'], ['61', '61 phím'], ['88', '88 phím']], () => set.kb, (v) => { set.kb = v; save(); layout(); })),
       h('div', { class: 'lp-row' }, h('span', { class: 'lp-name', text: 'Tên nốt trên nốt rơi' }), tog('Hiện', () => set.names, (v) => { set.names = v; save(); })),
+      h('div', { class: 'lp-row' }, h('span', { class: 'lp-name', text: 'Giọng đếm "Three, two, one, go!"' }), tog('Bật', () => set.voice !== false, (v) => { set.voice = v; save(); if (!v) hush(); })),
       h('div', { class: 'lp-row' }, h('span', { class: 'lp-name', text: 'Hiệu ứng lấp lánh' }), tog('Bật', () => set.fx !== false, (v) => { set.fx = v; save(); if (!v) clearFx(); })));
   }
 
@@ -1002,6 +1030,7 @@ export function createLearn(env) {
     running = false;
     cancelAnimationFrame(raf);
     silence();
+    hush();
     keys.clear();
     if (document.fullscreenElement === els.root) document.exitFullscreen().catch(() => {});
     els.root.hidden = true;
