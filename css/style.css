@@ -661,3 +661,6 @@ dialog.guide.small { width: min(34rem, calc(100vw - 4rem)); }
 .brand-credit { display: flex; align-items: center; gap: 0.5rem; font: 600 0.875rem/1.2 var(--sans); color: var(--ink-3); white-space: nowrap; }
 .brand-credit b { color: var(--brass-2); font-weight: 800; }
 .brand-credit .sep { width: 0.25rem; height: 0.25rem; border-radius: 50%; background: var(--ink-3); }
+
+.checks { list-style: none; padding: 0; display: grid; gap: 0.375rem; margin: 0.75rem 0 1rem; font-weight: 700; }
+.checks .ok { color: #7cf0b8; } .checks .bad { color: #ff9aa8; }

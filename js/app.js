@@ -376,11 +376,13 @@ document.addEventListener('dragstart', (e) => { if (!isEditable(e.target)) e.pre
 let installEvt = null;
 const installBtn = $('#btn-install');
 const isInstalled = () => matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone;
+installEvt = window.__bip || null; // index.html bắt sớm tín hiệu của Chrome, phòng khi nó bắn trước lúc app nạp xong
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; });
 // Hộp thoại nhỏ của app: tiêu đề, lời nhắn, nút đồng ý (tùy chọn) và nút đóng.
-function askDialog({ title, text, steps, ok, onOk, cancel = 'Hủy' }) {
+function askDialog({ title, text, steps, extra, ok, onOk, cancel = 'Hủy' }) {
   const dlg = h('dialog', { class: 'guide small' });
   dlg.append(h('div', { class: 'dlg' }, h('h3', { text: title }), h('p', { class: 'sub', text }),
+    extra || null,
     steps ? h('ol', { class: 'guide-steps' }, ...steps.map(([t, d]) => h('li', {}, h('b', { text: t }), h('span', { text: d })))) : null,
     h('div', { class: 'dlg-actions' },
       ok ? h('button', { type: 'button', class: 'btn-primary big', text: ok, onclick: () => { dlg.close(); onOk && onOk(); } }) : null,
@@ -407,8 +409,17 @@ async function onInstallClick() {
     });
     return;
   }
+  // Chrome không đưa tín hiệu cho phép tạo lối tắt: kiểm tra từng điều kiện để biết vì sao.
+  const checks = [];
+  checks.push([/Chrome|Edg\//.test(navigator.userAgent) && !/OPR\//.test(navigator.userAgent), 'Đang dùng Chrome hoặc Edge']);
+  checks.push([window.isSecureContext, 'Trang chạy qua https']);
+  try { const r = await fetch('manifest.webmanifest', { cache: 'no-store' }); const m = await r.json(); checks.push([r.ok && !!(m.icons || []).length, 'File manifest và biểu tượng hợp lệ']); } catch (e) { checks.push([false, 'File manifest và biểu tượng hợp lệ']); }
+  try { const reg = await navigator.serviceWorker.getRegistration(); checks.push([!!(reg && (reg.active || reg.waiting)), 'Service worker đang chạy']); } catch (e) { checks.push([false, 'Service worker đang chạy']); }
+  const list = h('ul', { class: 'checks' }, ...checks.map(([ok, t]) => h('li', { class: ok ? 'ok' : 'bad', text: (ok ? '✓ ' : '✗ ') + t })));
   askDialog({
-    title: 'Chrome chưa cho tạo lối tắt lúc này', text: 'Đợi vài giây rồi bấm lại. Nếu vẫn thế, mở web trong tab Chrome thường (không mở từ shortcut) rồi bấm biểu tượng cài đặt bên phải thanh địa chỉ, hoặc menu ⋮ → Truyền, lưu và chia sẻ → Cài đặt Nốt Rơi.', cancel: 'Đã hiểu',
+    title: 'Chrome chưa cho tạo lối tắt lúc này',
+    text: 'Phần của app đã kiểm tra bên dưới. Nếu đều ✓ thì Chrome đang tự chặn, thường vì app đã được cài sẵn hoặc bạn từng bấm tắt hộp cài. Hãy nhìn bên phải thanh địa chỉ: có biểu tượng cài đặt (màn hình có mũi tên) thì bấm vào đó, hoặc menu ⋮ → Truyền, lưu và chia sẻ → Cài đặt Nốt Rơi.',
+    extra: list, cancel: 'Đã hiểu',
   });
 }
 installBtn.addEventListener('click', onInstallClick);
