@@ -1,6 +1,6 @@
 {
   "name": "hoa-am",
-  "version": "0.18.1",
+  "version": "0.18.2",
   "private": true,
   "type": "module",
   "description": "Nghe, chỉnh và học bài MIDI trên đàn organ qua Web MIDI",

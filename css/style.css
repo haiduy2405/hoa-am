@@ -725,3 +725,11 @@ dialog.mixer-dlg { width: min(80rem, calc(100vw - 4rem)); }
 .studio-empty .hint { font-size: clamp(0.9375rem, 2.2vh, 1.25rem); }
 .recent { gap: 0.5rem; }
 .recent-item { padding: 0.625rem 1.1rem; }
+
+.recent-item { display: flex; align-items: center; justify-content: space-between; gap: 1rem; text-align: left; }
+.ri-text { display: grid; gap: 0.0625rem; min-width: 0; }
+.ri-text b { font: 800 1.125rem/1.2 var(--serif); color: var(--ink); font-size: 1.125rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ri-text small { color: var(--ink-3); font-size: 0.875rem; font-weight: 600; }
+.ri-stars { display: flex; gap: 0.0625rem; font-size: 1.125rem; flex-shrink: 0; }
+.ri-stars i { font-style: normal; color: rgba(255,255,255,0.22); }
+.ri-stars i.on { color: #ffe27a; }

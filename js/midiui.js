@@ -144,9 +144,14 @@ export function createStudio(env) {
 
   function renderRecent() {
     const list = env.recent().slice(0, 5);
-    els.recent.replaceChildren(h('b', { text: 'Bài gần đây' }), ...(list.length ? list.map((s) =>
-      h('button', { type: 'button', class: 'recent-item', onclick: () => env.openSaved(s.id) },
-        h('span', { text: s.title || 'Bài chưa đặt tên' }), h('i', { text: `${s.parts} phần, ${s.notes.toLocaleString('vi-VN')} nốt` }))) : [h('p', { class: 'hint', text: 'Bài bạn mở sẽ hiện ở đây, lần sau bấm là vào ngay.' })]));
+    els.recent.replaceChildren(h('b', { text: 'Bài gần đây' }), ...(list.length ? list.map((s) => {
+      const m = (env.meta && env.meta(s.id)) || {};
+      const sub = m.artist || m.cat || 'File của bạn';
+      const st = env.stars ? env.stars(s.title) : 0;
+      return h('button', { type: 'button', class: 'recent-item', onclick: () => env.openSaved(s.id) },
+        h('span', { class: 'ri-text' }, h('b', { text: s.title || 'Bài chưa đặt tên' }), h('small', { text: sub })),
+        h('span', { class: 'ri-stars', 'aria-label': st + ' trên 3 sao' }, ...[0, 1, 2].map((k) => h('i', { class: k < st ? 'on' : '', text: '★' }))));
+    }) : [h('p', { class: 'hint', text: 'Bài bạn mở sẽ hiện ở đây, lần sau bấm là vào ngay.' })]));
   }
 
   function renderHead() {

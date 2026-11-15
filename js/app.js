@@ -281,6 +281,8 @@ studio = createStudio({
   adopt: adoptMidi,
   openSaved,
   recent: listSongs,
+  meta: (id) => (catalog && id && id.startsWith('kho:') ? catalog.find((c) => 'kho:' + c.file === id) : null),
+  stars: starsOf,
   noteLabel,
   acceptCh: (ch) => S.channels.includes(ch),
   download, slug,
@@ -361,6 +363,7 @@ try { if (!localStorage.getItem('notroi.seen')) setTimeout(showGuide, 400); } ca
   if (song) { curId = id; studio.show(song, song.title); }
 }
 hub.init().then(renderDevice);
+loadCatalog().then(() => studio.refreshRecent()).catch(() => {}); // nạp kho sớm để Bài gần đây hiện được tác giả/thể loại
 
 // Móc gỡ lỗi nhỏ: cho phép test tự động mà không cần đàn thật.
 window.__hoaam = { dock, hub, studio, settings: S, adoptMidi };
