@@ -46,6 +46,7 @@ export function createStudio(env) {
     env.onSongChange(song);
     renderBar();
     renderHead();
+    renderPreview();
     renderParts();
   }
   function applySnapshot(str) {
@@ -82,6 +83,7 @@ export function createStudio(env) {
     if (els.seek) els.seek.value = String(Math.round(t));
     const pct = Math.min(100, (t / endTick()) * 100) + '%';
     els.parts.querySelectorAll('.ph').forEach((e) => { e.style.left = pct; });
+    if (els.pline) els.pline.style.bottom = pct;
   }
   function startPlay() {
     if (!song) return;
@@ -133,7 +135,10 @@ export function createStudio(env) {
     els.head = h('div', { class: 'studio-head' });
     els.bar = h('div', { class: 'studio-bar', role: 'toolbar', 'aria-label': 'Điều khiển phát' });
     els.parts = h('div', { class: 'studio-parts', role: 'list', 'aria-label': 'Các phần nhạc cụ' });
-    els.view.append(els.head, els.bar, els.parts);
+    els.preview = h('div', { class: 'preview' });
+    els.dock = h('div', { class: 'dock' });
+    els.mixer = h('details', { class: 'mixer' }, h('summary', { text: 'Chỉnh từng phần và xuất file .mid' }), h('div', { class: 'mixer-tools' }, btn('Xuất file .mid', () => exportMid(), 'btn-ghost')), els.parts);
+    els.view.append(els.head, els.bar, els.preview, els.dock, els.mixer);
     root.append(els.empty, els.view);
   }
 
@@ -151,13 +156,54 @@ export function createStudio(env) {
       h('div', { class: 'studio-title' }, title,
         h('span', { text: `${song.parts.length} phần, ${song.parts.reduce((a, p) => a + p.notes.length, 0).toLocaleString('vi-VN')} nốt` })),
       h('div', { class: 'studio-head-actions' },
-        els.out = h('button', { type: 'button', class: 'out-chip', onclick: () => env.openDevice() }),
-        btn('Kho bài', () => env.openKho(), 'btn-ghost'),
-        btn('Mở file khác', pickFile, 'btn-ghost'),
-        btn('Đóng bài', closeSong, 'btn-ghost', { title: 'Bài vẫn được lưu trong Bản nhạc của tôi' }),
-        btn('Học bài này', openLearn, 'btn-primary', { id: 'btn-learn', title: 'Nốt rơi, đợi bạn chơi đúng từng tay' }),
-        btn('Tải file .mid', exportMid, 'btn-ghost')));
+        els.out = h('button', { type: 'button', class: 'out-chip', onclick: () => env.openDevice() })));
     renderOut();
+  }
+
+  function renderDock() {
+    const big = (text, sub, fn, cls, extra = {}) => h('button', { type: 'button', class: 'dock-btn ' + cls, onclick: fn, ...extra }, h('b', { text }), sub ? h('small', { text: sub }) : null);
+    els.dock.replaceChildren(
+      big('Kho bài', 'Chọn bài có sẵn', () => env.openKho(), 'dk-side'),
+      big('Nhập File .mid', 'Mở file từ máy', pickFile, 'dk-side'),
+      big('Đóng bài', 'Vẫn được lưu', closeSong, 'dk-side', { title: 'Bài vẫn được lưu trong Bản nhạc của tôi' }),
+      big('VÀO CHƠI', 'Nốt rơi, chơi đúng để ghi điểm', openLearn, 'dk-play', { id: 'btn-learn' }));
+  }
+
+  // Sơ đồ nốt rơi: cả bài trên một khung, đầu bài ở dưới (chỗ nốt chạm phím), cuối bài ở trên.
+  function renderPreview() {
+    if (!song || !els.preview) return;
+    const cv = h('canvas', { class: 'pv-cv', 'aria-label': 'Sơ đồ nốt rơi của cả bài' });
+    els.pline = h('i', { class: 'pv-line' });
+    els.preview.replaceChildren(h('div', { class: 'pv-head' }, h('b', { text: 'Sơ đồ bài hát' }), h('span', { text: 'Nốt rơi từ trên xuống, đầu bài ở dưới cùng' })), h('div', { class: 'pv-box' }, cv, els.pline));
+    const draw = () => {
+      const box = cv.parentElement; if (!box || !box.clientWidth) return;
+      const dpr = window.devicePixelRatio || 1;
+      const W = box.clientWidth, H = box.clientHeight;
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      const g = cv.getContext('2d'); g.scale(dpr, dpr);
+      const end = endTick();
+      const all = song.parts.filter((p) => p.channel !== 9).flatMap((p) => p.notes);
+      const lo = Math.max(0, Math.min(48, ...all.map((n) => n.n)) - 1), hi = Math.min(127, Math.max(84, ...all.map((n) => n.n)) + 1);
+      const span = hi - lo + 1, kw = W / span;
+      g.fillStyle = 'rgba(255,255,255,0.035)';
+      for (let k = lo; k <= hi; k++) if ([1, 3, 6, 8, 10].includes(k % 12)) g.fillRect((k - lo) * kw, 0, kw, H);
+      g.fillStyle = 'rgba(255,255,255,0.08)';
+      for (let k = lo; k <= hi; k++) if (k % 12 === 0) g.fillRect((k - lo) * kw, 0, 1, H);
+      song.parts.forEach((p, i) => {
+        if (p.channel === 9) return;
+        g.fillStyle = PART_COLORS[i % PART_COLORS.length];
+        for (const n of p.notes) {
+          const y1 = H - (n.t / end) * H, h2 = Math.max(2, (n.d / end) * H);
+          g.globalAlpha = 0.9;
+          g.beginPath(); g.roundRect((n.n - lo) * kw + 0.5, y1 - h2, Math.max(2, kw - 1), h2, 2); g.fill();
+        }
+      });
+      g.globalAlpha = 1;
+    };
+    requestAnimationFrame(draw);
+    if (els.pvRO) els.pvRO.disconnect();
+    els.pvRO = new ResizeObserver(draw); els.pvRO.observe(cv.parentElement);
+    updateProgress(player.active ? player.tick() : cursor);
   }
 
   function renderBar() {
@@ -239,7 +285,7 @@ export function createStudio(env) {
     els.empty.hidden = !!song;
     els.view.hidden = !song;
     if (!song) { stopPlay(); renderRecent(); return; }
-    renderHead(); renderBar(); renderParts();
+    renderHead(); renderBar(); renderPreview(); renderDock(); renderParts();
   }
 
   function renderOut() {

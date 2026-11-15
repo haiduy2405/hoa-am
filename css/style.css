@@ -282,7 +282,7 @@ dialog::backdrop { background: rgba(8, 6, 13, 0.75); backdrop-filter: blur(0.187
 
 .out-chip.ok::before { background: var(--verd); box-shadow: 0 0 0 0.1875rem rgba(111, 201, 179, 0.22); }
 
-.studio-bar { display: flex; gap: 0.625rem 1.375rem; flex-wrap: wrap; align-items: center; padding: 0.75rem 1rem; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg-2); }
+.studio-bar { display: flex; gap: 0.875rem 1.75rem; flex-wrap: wrap; align-items: center; padding: 1.25rem 1.5rem; box-shadow: 0 0.5rem 2rem rgba(0,0,0,0.35); border-color: var(--line-2); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg-2); }
 
 .sb-group { display: flex; gap: 0.5625rem; align-items: center; flex-wrap: wrap; }
 
@@ -294,7 +294,7 @@ dialog::backdrop { background: rgba(8, 6, 13, 0.75); backdrop-filter: blur(0.187
 
 .studio-time { font: 400 1.625rem/1 var(--serif); min-width: 3.75rem; font-feature-settings: 'tnum'; }
 
-.studio-bar .play { padding: 0.5625rem 1.25rem; min-height: 2.625rem; display: inline-flex; align-items: center; gap: 0.5625rem; border-radius: 62.4375rem; background: var(--brass); color: #1b1408; font-weight: 600; font-size: 0.9375rem; }
+.studio-bar .play { padding: 0.875rem 2.25rem; min-height: 3.75rem; font-size: 1.25rem; display: inline-flex; align-items: center; gap: 0.5625rem; border-radius: 62.4375rem; background: var(--brass); color: #1b1408; font-weight: 700; }
 
 .studio-bar .play:hover { background: var(--brass-2); }
 
@@ -519,3 +519,37 @@ dialog.kho { width: min(72rem, calc(100vw - 4rem)); max-height: min(88vh, 60rem)
 .kho-t i { font-style: normal; color: var(--ink-3); font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .kho-c { color: var(--ink-3); font-size: 0.875rem; }
 .kho-d { color: var(--ink-3); font-size: 0.9375rem; text-align: right; font-feature-settings: 'tnum'; }
+
+/* Player lớn hơn */
+.studio-time { font-size: 2.5rem; min-width: 5.5rem; }
+.studio-bar .studio-seek { height: 1.5rem; }
+.studio-bar #midi-bpm { font-size: 1.5rem; width: 5rem; }
+.studio-bar .step.wide, .studio-bar .toggle, .studio-bar .btn-ghost.small { min-height: 2.75rem; font-size: 1rem; padding-inline: 0.875rem; }
+
+/* Sơ đồ nốt rơi */
+.preview { display: grid; gap: 0.5rem; min-width: 0; }
+.pv-head { display: flex; align-items: baseline; gap: 0.875rem; }
+.pv-head b { font: 400 1.375rem/1.2 var(--serif); }
+.pv-head span { color: var(--ink-3); font-size: 0.875rem; }
+.pv-box { position: relative; height: 17rem; border: 1px solid var(--line-2); border-radius: var(--r-md); overflow: hidden; background: linear-gradient(#0e0c15, #15121f); }
+.pv-cv { display: block; width: 100%; height: 100%; }
+.pv-line { position: absolute; left: 0; right: 0; height: 2px; background: var(--brass); box-shadow: 0 0 0.75rem var(--brass); bottom: 0; pointer-events: none; }
+
+/* Dải nút lớn */
+.dock { display: grid; grid-template-columns: 1fr 1fr 1fr 2.6fr; gap: 0.875rem; align-items: stretch; }
+.dock-btn { display: grid; gap: 0.25rem; align-content: center; justify-items: center; text-align: center; padding: 1.25rem 0.75rem; min-height: 6.5rem; border-radius: var(--r-md); border: 1px solid var(--line-2); background: var(--panel); color: var(--ink); transition: transform 0.12s, background 0.12s, border-color 0.12s; }
+.dock-btn b { font-size: 1.375rem; font-weight: 700; }
+.dock-btn small { color: var(--ink-3); font-size: 0.875rem; }
+.dock-btn:hover { background: var(--panel-2); border-color: var(--brass); transform: translateY(-2px); }
+.dock-btn.dk-play { background: linear-gradient(135deg, var(--brass-2), var(--brass)); color: #1b1408; border-color: transparent; box-shadow: 0 0.75rem 2.5rem rgba(227,179,92,0.4); min-height: 8rem; }
+.dock-btn.dk-play b { font-size: 2.75rem; letter-spacing: 0.06em; font-weight: 800; }
+.dock-btn.dk-play small { color: #3a2a0c; font-size: 1rem; }
+.dock-btn.dk-play:hover { background: linear-gradient(135deg, #fff0c8, var(--brass-2)); }
+.dock { align-items: center; }
+.dock .dk-side { min-height: 6.5rem; }
+
+/* Chỉnh từng phần (thu gọn) */
+.mixer > summary { cursor: pointer; color: var(--ink-3); padding: 0.5rem 0; font-size: 0.9375rem; }
+.mixer[open] > summary { margin-bottom: 0.5rem; }
+
+.mixer-tools { margin-bottom: 0.625rem; }

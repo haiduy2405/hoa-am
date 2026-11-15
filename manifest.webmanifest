@@ -1,7 +1,7 @@
 {
   "name": "Nốt Rơi",
   "short_name": "Nốt Rơi",
-  "description": "Dò hợp âm, sửa nhạc MIDI và học bài trên đàn organ của bạn.",
+  "description": "Mở file MIDI, nghe qua đàn organ và học bài với nốt rơi.",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",
