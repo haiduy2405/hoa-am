@@ -176,14 +176,6 @@ export function createStudio(env) {
   function renderDock() {
     const big = (text, sub, fn, cls, extra = {}) => h('button', { type: 'button', class: 'dock-btn ' + cls, onclick: fn, ...extra }, h('b', { text }), sub ? h('small', { text: sub }) : null);
     els.dock.replaceChildren(
-      (() => {
-        const b = big('Kho bài', 'Chọn bài có sẵn', () => env.openKho(), 'dk-side dk-kho');
-        const ic = h('span', { class: 'dk-ic', 'aria-hidden': 'true' });
-        ic.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><path d="M19 13.5v6.2"/><circle cx="16.8" cy="19.7" r="2.2" fill="currentColor"/><path d="M19 13.5l2.5 1.2"/></svg>';
-        b.querySelector('b').prepend(ic);
-        return b;
-      })(),
-      big('Nhập File .mid', 'Mở file từ máy', pickFile, 'dk-side'),
       big('Hủy bài', '', closeSong, 'dk-side dk-cancel', { title: 'Đóng bài này, bài vẫn được lưu' }),
       big('VÀO CHƠI', 'Nốt rơi, chơi đúng để ghi điểm', openLearn, 'dk-play', { id: 'btn-learn' }));
   }

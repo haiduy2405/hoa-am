@@ -757,3 +757,5 @@ dialog.mixer-dlg { width: min(80rem, calc(100vw - 4rem)); }
 .dock-btn.dk-kho .dk-ic { display: inline-grid; place-items: center; width: 1.875rem; height: 1.875rem; border-radius: 50%; background: #4cc9f0; color: #0d2a4a; }
 .dock-btn.dk-kho small { color: #b8e8f8; }
 .dock-btn.dk-kho:hover { background: linear-gradient(180deg, rgba(76,201,240,0.4), rgba(76,201,240,0.22)); border-color: #8be0fa; }
+
+.dock { grid-template-columns: 1fr 3fr; }

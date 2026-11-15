@@ -1,7 +1,8 @@
 // Mỗi lần có thay đổi phải tăng VERSION (sửa nhỏ: số cuối, thêm tính năng: số giữa) và cập nhật NOTES.
-export const VERSION = '0.19.6';
+export const VERSION = '0.19.7';
 export const AUTHOR = 'duyluma';
 export const NOTES = [
+  'Màn bài chỉ còn Hủy bài và VÀO CHƠI, Kho bài và Nhập File nằm ở trang chủ',
   'Nút Kho bài thiết kế lại: màu xanh dương, có icon',
   'Nút Đóng bài thành Hủy bài, màu đỏ có dấu X',
   'Sơ đồ bài hát: bấm giữ và kéo lên xuống để tua như timeline',
