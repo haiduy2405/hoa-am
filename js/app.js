@@ -212,7 +212,7 @@ function adoptMidi(song, name, { id = null, exact = false } = {}) {
   curId = id || newId();
   studio.show(song, name);
   saveNow(song);
-  toast('Đã mở file MIDI. Nối đàn rồi bấm Phát để nghe.');
+  toast('Đã mở file MIDI. Nối đàn rồi bấm Nghe thử để nghe.');
 }
 function openSaved(id) {
   const song = loadSong(id);

@@ -1,6 +1,6 @@
 // Phòng nhạc MIDI: mở file .mid, nghe qua đàn, chỉnh âm sắc, âm lượng từng phần, đổi tông, tải lại, và học bài.
 import {
-  GM, barBeats, makeSong, parseMidi, scaleTempo, serializeSong, songEnd, transposeNotes, writeMidi,
+  GM, barBeats, makeClock, makeSong, parseMidi, scaleTempo, serializeSong, songEnd, transposeNotes, writeMidi,
 } from './songmidi.js';
 import { Player } from './player.js';
 import { createLearn } from './learn.js';
@@ -69,12 +69,10 @@ export function createStudio(env) {
   }
 
   // ---------- Phát ----------
+  const fmt = (ms) => { const s = Math.max(0, Math.round(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
   const tickText = (t) => {
-    const bb = barBeats(song);
-    const beats = t / song.ppq;
-    const bar = Math.floor(beats / bb + 1e-9);
-    const beat = Math.floor(beats - bar * bb + 1e-9);
-    return `${bar + 1}.${beat + 1}`;
+    const clk = makeClock(song);
+    return `${fmt(clk.tickToMs(t))} / ${fmt(clk.tickToMs(endTick()))}`;
   };
   const endTick = () => Math.max(1, songEnd(song));
   function updateProgress(t) {
@@ -225,31 +223,16 @@ export function createStudio(env) {
   function renderBar() {
     if (!song || !els.bar) return;
     const playing = player.active;
-    const bpm = Math.round(song.tempos[0].bpm * 10) / 10;
-    const bpmIn = h('input', { type: 'number', id: 'midi-bpm', min: 20, max: 300, value: bpm, 'aria-label': 'Tempo', inputmode: 'decimal' });
-    bpmIn.addEventListener('change', () => setTempo(+bpmIn.value));
     const play = h('button', { type: 'button', class: 'play', 'aria-pressed': String(playing), onclick: togglePlay });
-    play.innerHTML = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">' + (playing ? '<rect x="3" y="3" width="10" height="10" rx="1.5" fill="currentColor"/>' : '<path d="M4 2.5v11l9-5.5z" fill="currentColor"/>') + '</svg><span>' + (playing ? 'Dừng' : 'Phát') + '</span>';
-    els.time = h('output', { class: 'studio-time', 'aria-label': 'Vị trí: ô nhịp.phách', text: tickText(playing ? player.tick() : cursor) });
+    play.innerHTML = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">' + (playing ? '<rect x="3" y="3" width="10" height="10" rx="1.5" fill="currentColor"/>' : '<path d="M4 2.5v11l9-5.5z" fill="currentColor"/>') + '</svg><span>' + (playing ? 'Dừng' : 'Nghe thử') + '</span>';
+    els.time = h('output', { class: 'studio-time', 'aria-label': 'Thời gian', text: tickText(playing ? player.tick() : cursor) });
     els.seek = h('input', { type: 'range', class: 'studio-seek', min: 0, max: endTick(), step: 1, value: Math.round(playing ? player.tick() : cursor), 'aria-label': 'Vị trí trong bài' });
     els.seek.addEventListener('input', () => {
       cursor = +els.seek.value;
       if (player.active) player.setFrom(cursor);
       updateProgress(cursor);
     });
-    const loopBtn = h('button', { type: 'button', class: 'toggle', 'aria-pressed': String(loop), onclick: () => { loop = !loop; renderBar(); if (player.active) player.loop = loop; } }, 'Lặp');
-    const shift = (label, d, text) => h('button', { type: 'button', class: 'step wide', 'aria-label': label, title: label, onclick: () => transpose(d) }, text);
-    els.bar.replaceChildren(
-      h('div', { class: 'sb-group' }, play, els.time, btn('Về đầu', () => { cursor = 0; if (player.active) player.setFrom(0); updateProgress(0); }), loopBtn),
-      els.seek,
-      h('div', { class: 'sb-group' },
-        h('label', { class: 'bpm' }, bpmIn, h('span', { text: 'BPM' })),
-        song.tempos.length > 1 ? h('span', { class: 'hint', text: 'Bài có nhiều tempo, đổi sẽ co giãn đều' }) : null),
-      h('div', { class: 'sb-group' },
-        h('span', { class: 'sb-lbl', text: 'Đổi tông cả bài' }),
-        shift('Hạ một quãng tám', -12, '−12'), shift('Hạ nửa cung', -1, '−1'), shift('Nâng nửa cung', 1, '+1'), shift('Nâng một quãng tám', 12, '+12'),
-        btn('Hoàn tác', () => { doUndo(); }, 'btn-ghost small', { disabled: undo.length ? null : true }),
-        btn('Làm lại', () => { doRedo(); }, 'btn-ghost small', { disabled: redo.length ? null : true })));
+    els.bar.replaceChildren(play, els.seek, els.time);
   }
 
   // Dải mật độ nốt của một phần: nhìn là biết đoạn nào có nhạc, không cần cuộn piano roll.

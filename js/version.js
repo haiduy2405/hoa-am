@@ -1,7 +1,8 @@
 // Mỗi lần có thay đổi phải tăng VERSION (sửa nhỏ: số cuối, thêm tính năng: số giữa) và cập nhật NOTES.
-export const VERSION = '0.19.1';
+export const VERSION = '0.19.2';
 export const AUTHOR = 'duyluma';
 export const NOTES = [
+  'Thanh phát gọn lại: chỉ còn Nghe thử, thanh tua và thời gian (phút:giây)',
   'Ghi chú phiên bản trong Cài đặt gọn lại, bấm Xem thêm mới hiện hết',
   'Biểu tượng app mới: nền tím, nốt màu rơi xuống phím đàn; dùng luôn làm logo trên thanh trên',
   'Đổi tiêu đề tab thành Nốt Rơi - Chơi nốt',
