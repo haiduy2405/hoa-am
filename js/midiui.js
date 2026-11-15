@@ -155,9 +155,12 @@ export function createStudio(env) {
   function renderHead() {
     const title = h('input', { class: 'studio-name', type: 'text', value: song.title || fileName || '', placeholder: 'Đặt tên bài', maxlength: 80, 'aria-label': 'Tên bài', autocomplete: 'off' });
     title.addEventListener('change', () => { song.title = title.value.trim(); env.onSongChange(song); });
+    const back = h('button', { type: 'button', class: 'back-btn', 'aria-label': 'Quay lại', title: 'Quay lại (bài vẫn được lưu)', onclick: closeSong });
+    back.innerHTML = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
     els.head.replaceChildren(
-      h('div', { class: 'studio-title' }, title,
-        h('span', { text: `${song.parts.length} phần, ${song.parts.reduce((a, p) => a + p.notes.length, 0).toLocaleString('vi-VN')} nốt` })),
+      h('div', { class: 'studio-left' }, back,
+        h('div', { class: 'studio-title' }, title,
+          h('span', { text: `${song.parts.length} phần, ${song.parts.reduce((a, p) => a + p.notes.length, 0).toLocaleString('vi-VN')} nốt` }))),
       h('div', { class: 'studio-head-actions' },
         els.out = h('button', { type: 'button', class: 'out-chip', onclick: () => env.openDevice() })));
     renderOut();
@@ -176,7 +179,6 @@ export function createStudio(env) {
   function renderDock() {
     const big = (text, sub, fn, cls, extra = {}) => h('button', { type: 'button', class: 'dock-btn ' + cls, onclick: fn, ...extra }, h('b', { text }), sub ? h('small', { text: sub }) : null);
     els.dock.replaceChildren(
-      big('Hủy bài', '', closeSong, 'dk-side dk-cancel', { title: 'Đóng bài này, bài vẫn được lưu' }),
       big('VÀO CHƠI', 'Nốt rơi, chơi đúng để ghi điểm', openLearn, 'dk-play', { id: 'btn-learn' }));
   }
 

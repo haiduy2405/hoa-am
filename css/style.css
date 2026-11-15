@@ -759,3 +759,8 @@ dialog.mixer-dlg { width: min(80rem, calc(100vw - 4rem)); }
 .dock-btn.dk-kho:hover { background: linear-gradient(180deg, rgba(76,201,240,0.4), rgba(76,201,240,0.22)); border-color: #8be0fa; }
 
 .dock { grid-template-columns: 1fr 3fr; }
+
+.dock { grid-template-columns: 1fr; }
+.studio-left { display: flex; align-items: center; gap: 1rem; min-width: 0; }
+.back-btn { flex: none; display: grid; place-items: center; width: 3.5rem; height: 3.5rem; border-radius: 50%; background: rgba(255,255,255,0.14); border: 0.1875rem solid rgba(255,255,255,0.35); color: #fff; transition: background 0.12s, transform 0.12s; }
+.back-btn:hover { background: rgba(255,255,255,0.26); transform: translateX(-2px); }
