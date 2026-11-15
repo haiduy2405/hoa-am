@@ -1,7 +1,8 @@
 // Mỗi lần có thay đổi phải tăng VERSION (sửa nhỏ: số cuối, thêm tính năng: số giữa) và cập nhật NOTES.
-export const VERSION = '0.18.2';
+export const VERSION = '0.18.3';
 export const AUTHOR = 'duyluma';
 export const NOTES = [
+  'Đổi tiêu đề tab thành Nốt Rơi - Chơi nốt',
   'Bài gần đây hiện thêm tác giả (hoặc thể loại nếu không có) và số sao',
   'Sửa tên bài Vết Mưa; màn hình chính không còn cuộn, Bài gần đây chỉ hiện 5 bài; sửa khung sơ đồ nốt rơi co giãn đúng',
   'Màn hình bài hát vừa khít một màn hình không cần cuộn: sơ đồ nốt rơi tự co giãn, nhạc cụ chuyển vào hộp riêng, gọn lại player và dải nút',
