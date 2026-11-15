@@ -375,19 +375,27 @@ document.addEventListener('dragstart', (e) => { if (!isEditable(e.target)) e.pre
 let installEvt = null;
 const installBtn = $('#btn-install');
 const isInstalled = () => matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone;
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  installEvt = e;
-  if (!isInstalled()) installBtn.hidden = false;
-});
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; });
+function showInstallHelp() {
+  const dlg = h('dialog', { class: 'guide' });
+  dlg.append(h('div', { class: 'dlg' }, h('h3', { text: 'Cài Nốt Rơi ra màn hình' }),
+    h('p', { class: 'sub', text: 'Mở web trong tab Chrome thường (không mở từ shortcut), rồi làm theo:' }),
+    h('ol', { class: 'guide-steps' },
+      h('li', {}, h('b', { text: 'Bấm biểu tượng cài đặt' }), h('span', { text: 'Nằm bên phải thanh địa chỉ. Hoặc vào menu ⋮, chọn Truyền, lưu và chia sẻ, rồi Cài đặt Nốt Rơi.' })),
+      h('li', {}, h('b', { text: 'Bấm Cài đặt' }), h('span', { text: 'Nốt Rơi sẽ có shortcut ngoài desktop và mở toàn màn hình như một app.' }))),
+    h('div', { class: 'dlg-actions' }, h('button', { type: 'button', class: 'btn-primary big', text: 'Đã hiểu', onclick: () => dlg.close() }))));
+  dlg.addEventListener('close', () => dlg.remove());
+  document.body.append(dlg);
+  dlg.showModal();
+}
 installBtn.addEventListener('click', async () => {
-  if (!installEvt) return;
+  if (isInstalled()) { toast('Bạn đang dùng app đã cài rồi.'); return; }
+  if (!installEvt) { showInstallHelp(); return; }
   installEvt.prompt();
   await installEvt.userChoice.catch(() => {});
   installEvt = null;
-  installBtn.hidden = true;
 });
-window.addEventListener('appinstalled', () => { installBtn.hidden = true; toast('Đã cài Nốt Rơi ra màn hình.'); });
+window.addEventListener('appinstalled', () => { toast('Đã cài Nốt Rơi ra màn hình.'); });
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
 
 // ======================= Bản mới: bắt buộc cập nhật =======================

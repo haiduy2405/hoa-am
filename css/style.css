@@ -633,3 +633,8 @@ body.learn-open .piano-dock { display: none; }
 .pd-flow { position: absolute; left: 0; width: 100%; bottom: 10.5rem; height: 32rem; pointer-events: none; -webkit-mask-image: linear-gradient(to top, #000 45%, transparent); mask-image: linear-gradient(to top, #000 45%, transparent); }
 .pd-board { box-shadow: 0 -0.5rem 1.5rem rgba(0,0,0,0.25); }
 .pd-lane { pointer-events: none; }
+
+/* Nút cài ra màn hình: to và nổi bật, bên trái nút Cài đặt */
+.btn-install { padding: 0.625rem 1.5rem; min-height: 3rem; border-radius: 62.4375rem; font-weight: 800; font-size: 1.125rem; color: #fff; background: linear-gradient(135deg, #ff7eb6, #8e6cef); box-shadow: 0 0.25rem 0 #5b3fb8, 0 0.5rem 1.25rem rgba(0,0,0,0.3); white-space: nowrap; }
+.btn-install:hover { filter: brightness(1.1); }
+.btn-install:active { transform: translateY(0.2rem); box-shadow: 0 0.05rem 0 #5b3fb8; }
