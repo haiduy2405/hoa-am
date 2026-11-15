@@ -749,16 +749,16 @@ export function createLearn(env) {
       const sounding = n.ms <= pos && pos < n.end;
       const inset = k.black ? 1 : 1.5;
       const x = k.x + inset, w = Math.max(3, k.w - inset * 2);
-      g.globalAlpha = missed ? 0.25 : n.req ? 1 : set.mode === 'watch' ? 0.95 : 0.55;
+      g.globalAlpha = missed ? 0.25 : n.req ? 1 : set.mode === 'watch' ? 0.95 : 0.14;
       if (missed) g.fillStyle = '#6b6478';
       else { const gr = g.createLinearGradient(0, yb - hh, 0, yb); gr.addColorStop(0, LIGHT[n.hand]); gr.addColorStop(1, col); g.fillStyle = gr; }
       if (n.req && !missed && !done && n.ms - pos < 700 && n.ms > pos - 60) { g.shadowColor = col; g.shadowBlur = 16; }
       rr(g, x, yb - hh, w, hh, 6); g.fill();
       g.shadowBlur = 0;
       if (n.req) { g.globalAlpha = 0.55; g.strokeStyle = 'rgba(255,255,255,0.55)'; g.lineWidth = 1; rr(g, x + 0.5, yb - hh + 0.5, w - 1, hh - 1, 6); g.stroke(); }
-      if (done || sounding) { g.globalAlpha = 0.28; g.fillStyle = '#fff'; rr(g, x, yb - hh, w, hh, 6); g.fill(); }
+      if (n.req && (done || sounding)) { g.globalAlpha = 0.28; g.fillStyle = '#fff'; rr(g, x, yb - hh, w, hh, 6); g.fill(); }
       g.globalAlpha = 1;
-      if (showNames && w >= 22 && hh >= 18) {
+      if (showNames && (n.req || set.mode === 'watch') && w >= 22 && hh >= 18) {
         g.fillStyle = missed ? 'rgba(255,255,255,0.4)' : '#1a1308';
         g.font = '600 12px "Be Vietnam Pro", system-ui, sans-serif';
         g.textAlign = 'center'; g.textBaseline = 'bottom';
