@@ -1,7 +1,8 @@
 // Mỗi lần có thay đổi phải tăng VERSION (sửa nhỏ: số cuối, thêm tính năng: số giữa) và cập nhật NOTES.
-export const VERSION = '0.11.1';
+export const VERSION = '0.11.2';
 export const AUTHOR = 'duyluma';
 export const NOTES = [
+  'Mở file MIDI tự viết lại tên file thành tên bài rõ ràng, hiện ở Bài gần đây',
   'Bỏ tự động toàn màn hình khi bấm lần đầu',
   'Đổi tên thành Nốt Rơi; chỉ tối ưu cho máy tính, giao diện co giãn theo màn hình (chuẩn cho 2560x1440)',
   'Có phiên bản mới là hiện hộp thoại bắt buộc cập nhật, kiểm tra mỗi 20 giây',

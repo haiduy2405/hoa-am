@@ -1,11 +1,11 @@
 {
   "name": "hoa-am",
-  "version": "0.11.1",
+  "version": "0.11.2",
   "private": true,
   "type": "module",
   "description": "Nghe, chỉnh và học bài MIDI trên đàn organ qua Web MIDI",
   "scripts": {
-    "test": "node --test test/songmidi.test.mjs",
+    "test": "node --test test/songmidi.test.mjs test/title.test.mjs",
     "start": "python3 -m http.server 8000"
   }
 }

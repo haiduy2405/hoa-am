@@ -7,7 +7,7 @@ Chạy hoàn toàn trên trình duyệt, không cần cài gì, không gửi d�
 ## Dùng thế nào
 
 1. Mở trang bằng **Chrome hoặc Edge** trên máy tính (Safari và Firefox hỗ trợ Web MIDI hạn chế). Nối đàn qua cổng **USB TO HOST**, bật đàn, cho phép MIDI khi trình duyệt hỏi.
-2. Bấm **Mở file MIDI** (hoặc kéo thả file .mid vào trang). App đọc hết các nhạc cụ, tempo, nhịp, pedal. Bài tự lưu trong **Bản nhạc của tôi**, lần sau mở lại tự vào bài đang dở.
+2. Bấm **Mở file MIDI** (hoặc kéo thả file .mid vào trang). App đọc hết các nhạc cụ, tempo, nhịp, pedal. Tên bài lấy từ tên file, tự làm sạch (bỏ số thứ tự, gạch nối, chữ "midi", "karaoke", viết hoa chữ đầu), sửa lại được ở ô tên. Bài tự lưu trong **Bản nhạc của tôi**, lần sau mở lại tự vào bài đang dở.
 3. Bấm **Phát** (hoặc phím Space): bài chỉ phát qua cổng MIDI out của đàn. Chưa nối đàn thì app báo và mở hộp thoại kết nối. Kéo thanh tua để chọn chỗ phát, **Lặp** để phát lại liên tục. Mỗi phần có dải nốt nhìn nhanh và vạch chạy theo bài.
 4. Chỉnh từng phần: đổi âm sắc (128 âm sắc GM), âm lượng, tắt tiếng (M), chỉ nghe phần này (S), xóa phần. Cả bài: đổi tempo, đổi tông −12, −1, +1, +12 (phần trống giữ nguyên), Hoàn tác (Ctrl+Z) và Làm lại.
 5. **Tải file .mid** lưu bài đã chỉnh (nhiều track, giữ tempo, pedal, bánh pitch).

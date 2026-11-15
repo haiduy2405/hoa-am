@@ -2,6 +2,7 @@ import { MidiHub } from './midi.js';
 import { download, slug } from './export.js';
 import { createStudio } from './midiui.js';
 import { DEFAULTS, currentId, deleteSong, listSongs, loadSettings, loadSong, newId, saveSettings, saveSong, setCurrent } from './store.js';
+import { cleanTitle } from './title.js';
 import { AUTHOR, NOTES, VERSION } from './version.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -190,7 +191,7 @@ function buildLibraryDialog() {
 // ======================= Bài MIDI =======================
 function adoptMidi(song, name) {
   saveNow(studio.getSong());
-  if (!song.title || song.title === 'Hoa Am') song.title = name;
+  song.title = cleanTitle(name); // tên bài lấy từ tên file, không dùng tên track trong file (thường chỉ là "Piano")
   curId = newId();
   studio.show(song, name);
   saveNow(song);
