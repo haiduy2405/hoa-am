@@ -170,9 +170,14 @@ export function createStudio(env) {
     if (!els.opts) return;
     const group = (label, key, choices) => h('div', { class: 'opt-group' }, h('span', { class: 'opt-lbl', text: label }),
       h('div', { class: 'opt-btns' }, ...choices.map(([v, t]) => h('button', { type: 'button', class: 'opt-btn', 'aria-pressed': String(learn.getOpt(key) === v), text: t, onclick: () => { learn.setOpt(key, v); renderOpts(); } }))));
+    const on = learn.getOpt('mode') === 'rhythm';
+    const fight = h('button', { type: 'button', class: 'opt-fight', 'aria-pressed': String(on), title: 'Chơi theo nhịp, tính điểm, combo và Fever',
+      onclick: () => { learn.setOpt('mode', on ? 'wait' : 'rhythm'); renderOpts(); } },
+      h('span', { class: 'of-ic', 'aria-hidden': 'true', text: '★' }), h('span', { text: 'THI ĐẤU' }));
     els.opts.replaceChildren(
-      group('Cách chơi', 'mode', [['wait', 'Đợi tôi'], ['rhythm', 'Theo nhịp'], ['watch', 'Xem trước']]),
       group('Tay tập', 'hands', [['R', 'Tay phải'], ['L', 'Tay trái'], ['RL', 'Hai tay']]),
+      group('Cách chơi', 'mode', [['wait', 'Đợi tôi'], ['watch', 'Xem trước']]),
+      fight,
       group('Tốc độ', 'speed', [[0.5, 'Chậm'], [0.8, 'Vừa'], [1, 'Chuẩn']]));
   }
 

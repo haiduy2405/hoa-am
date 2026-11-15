@@ -769,3 +769,13 @@ dialog.mixer-dlg { width: min(80rem, calc(100vw - 4rem)); }
 .learn-nav .learn-title { font: 800 1.25rem/1.2 'Baloo 2', var(--serif); color: #fff; text-shadow: 0 0.125rem 0.5rem rgba(0,0,0,0.5); max-width: 24rem; }
 .learn-pause { min-height: 3.5rem; padding: 0.5rem 1.5rem; border-radius: 62.4375rem; display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 1.0625rem; background: #ffc93c; color: #1b1408; box-shadow: 0 0.25rem 0 #c99400; }
 .learn-hud { top: 5rem; }
+
+.opt-fight { position: relative; overflow: hidden; display: inline-flex; align-items: center; gap: 0.5rem; min-height: 3rem; padding: 0.5rem 1.5rem; border-radius: 62.4375rem; font: 800 1.125rem/1 'Baloo 2', var(--serif); letter-spacing: 0.06em; color: #fff; background: linear-gradient(135deg, #ff7a45, #ff3d8b); box-shadow: 0 0.25rem 0 #b3205f, 0 0 1.25rem rgba(255,61,139,0.45); transition: transform 0.12s; animation: fightPulse 1.8s ease-in-out infinite; }
+.opt-fight::after { content: ''; position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; background: linear-gradient(100deg, transparent, rgba(255,255,255,0.55), transparent); transform: skewX(-20deg); animation: fightShine 2.4s ease-in-out infinite; }
+.opt-fight:hover { transform: translateY(-2px) scale(1.04); }
+.opt-fight .of-ic { display: inline-block; animation: fightSpin 3s linear infinite; }
+.opt-fight[aria-pressed='true'] { outline: 0.1875rem solid #fff; outline-offset: 0.125rem; }
+@keyframes fightPulse { 0%,100% { box-shadow: 0 0.25rem 0 #b3205f, 0 0 0.75rem rgba(255,61,139,0.35); } 50% { box-shadow: 0 0.25rem 0 #b3205f, 0 0 1.75rem rgba(255,122,69,0.75); } }
+@keyframes fightShine { 0% { left: -60%; } 60%,100% { left: 130%; } }
+@keyframes fightSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .opt-fight, .opt-fight::after, .opt-fight .of-ic { animation: none; } }
