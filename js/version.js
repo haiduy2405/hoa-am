@@ -1,7 +1,8 @@
 // Mỗi lần có thay đổi phải tăng VERSION (sửa nhỏ: số cuối, thêm tính năng: số giữa) và cập nhật NOTES.
-export const VERSION = '0.19.4';
+export const VERSION = '0.19.5';
 export const AUTHOR = 'duyluma';
 export const NOTES = [
+  'Nút Đóng bài thành Hủy bài, màu đỏ có dấu X',
   'Sơ đồ bài hát: bấm giữ và kéo lên xuống để tua như timeline',
   'Bỏ nút Nhạc cụ ở màn bài cho gọn',
   'Thanh phát gọn lại: chỉ còn Nghe thử, thanh tua và thời gian (phút:giây)',

@@ -178,7 +178,7 @@ export function createStudio(env) {
     els.dock.replaceChildren(
       big('Kho bài', 'Chọn bài có sẵn', () => env.openKho(), 'dk-side'),
       big('Nhập File .mid', 'Mở file từ máy', pickFile, 'dk-side'),
-      big('Đóng bài', 'Vẫn được lưu', closeSong, 'dk-side', { title: 'Bài vẫn được lưu trong Bản nhạc của tôi' }),
+      big('Hủy bài', '', closeSong, 'dk-side dk-cancel', { title: 'Đóng bài này, bài vẫn được lưu' }),
       big('VÀO CHƠI', 'Nốt rơi, chơi đúng để ghi điểm', openLearn, 'dk-play', { id: 'btn-learn' }));
   }
 
