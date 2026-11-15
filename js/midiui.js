@@ -177,11 +177,11 @@ export function createStudio(env) {
       h('span', { class: 'of-ic', 'aria-hidden': 'true', text: '★' }), h('span', { text: 'THI ĐẤU' }));
     els.opts.replaceChildren(
       group('Tay tập', 'hands', [['R', 'Tay phải'], ['L', 'Tay trái'], ['RL', 'Hai tay']]),
-      h('div', { class: 'opt-group' }, h('span', { class: 'opt-lbl', text: 'Cách chơi' }),
+      group('Tốc độ', 'speed', [[0.5, 'Chậm'], [0.8, 'Vừa'], [1, 'Chuẩn']]),
+      h('div', { class: 'opt-group' }, h('span', { class: 'opt-lbl', text: 'Chế độ' }),
         h('div', { class: 'opt-btns' },
           h('button', { type: 'button', class: 'opt-btn', 'aria-pressed': String(!on), text: 'Luyện tập', onclick: () => { learn.setOpt('mode', 'wait'); renderOpts(); } }),
-          fight)),
-      group('Tốc độ', 'speed', [[0.5, 'Chậm'], [0.8, 'Vừa'], [1, 'Chuẩn']]));
+          fight)));
   }
 
   function renderDock() {

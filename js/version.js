@@ -1,7 +1,8 @@
 // Mỗi lần có thay đổi phải tăng VERSION (sửa nhỏ: số cuối, thêm tính năng: số giữa) và cập nhật NOTES.
-export const VERSION = '0.20.1';
+export const VERSION = '0.20.2';
 export const AUTHOR = 'duyluma';
 export const NOTES = [
+  'Hàng tuỳ chọn: Tay tập, Tốc độ ở giữa, Chế độ ra phía phải',
   'Chỉ còn hai cách chơi: Luyện tập (trước là Đợi tôi) và THI ĐẤU, bỏ Xem trước',
   'Tuỳ chọn xếp lại: Tay phải, Tay trái, rồi nút THI ĐẤU (trước là Theo nhịp) nổi bật có hiệu ứng',
   'Tập tay nào thì nốt tay còn lại mờ hẳn đi, dễ nhìn nốt cần chơi',
