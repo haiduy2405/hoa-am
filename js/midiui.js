@@ -159,7 +159,6 @@ export function createStudio(env) {
       h('div', { class: 'studio-title' }, title,
         h('span', { text: `${song.parts.length} phần, ${song.parts.reduce((a, p) => a + p.notes.length, 0).toLocaleString('vi-VN')} nốt` })),
       h('div', { class: 'studio-head-actions' },
-        btn('Nhạc cụ', () => els.mixer.showModal(), 'btn-ghost', { title: 'Đổi âm sắc, âm lượng từng phần, xuất file .mid' }),
         els.out = h('button', { type: 'button', class: 'out-chip', onclick: () => env.openDevice() })));
     renderOut();
   }
