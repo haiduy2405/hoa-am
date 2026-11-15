@@ -275,18 +275,6 @@ hub.init().then(renderDevice);
 window.__hoaam = { hub, studio, settings: S, adoptMidi };
 
 // ======================= Chạy như app =======================
-// Vào app là toàn màn hình: cú bấm hoặc phím đầu tiên (trình duyệt cần một thao tác của người dùng mới cho).
-let wantFull = true; // false sau khi người dùng tự thoát toàn màn hình, để không ép vào lại
-function enterFullscreen() {
-  const el = document.documentElement;
-  if (document.fullscreenElement || !el.requestFullscreen) return Promise.resolve();
-  return el.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
-}
-document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) wantFull = false; });
-const firstGesture = (e) => { if (wantFull && e.key !== 'Escape') enterFullscreen(); };
-document.addEventListener('pointerdown', firstGesture, true);
-document.addEventListener('keydown', firstGesture, true);
-
 // Không bôi đen, không menu chuột phải (trừ trong ô nhập chữ), không kéo thả.
 const isEditable = (t) => t instanceof Element && !!t.closest('input, textarea, [contenteditable="true"]');
 document.addEventListener('contextmenu', (e) => { if (!isEditable(e.target)) e.preventDefault(); });

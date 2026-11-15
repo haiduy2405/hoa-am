@@ -76,9 +76,9 @@ Test phủ đọc và ghi file MIDI (running status, tempo map, pedal), sửa n�
 
 ## Chạy như app
 
-- Cú bấm chuột hoặc phím bất kỳ đầu tiên đưa cả trang vào toàn màn hình (trình duyệt cần một thao tác của bạn mới cho). Esc để thoát, thoát rồi thì không bị ép vào lại.
+- Toàn màn hình do bạn tự bật (F11 trên trình duyệt, hoặc cài app để mở từ biểu tượng là toàn màn hình).
 - Không bôi đen, không nhấp đúp chọn chữ, không menu chuột phải (trừ trong ô nhập chữ như tên bài).
-- **Cài app**: bấm nút "Cài app" ở thanh trên (Chrome/Edge), hoặc menu trình duyệt > Cài đặt ứng dụng. Mở từ biểu tượng là toàn màn hình luôn. Trên iPhone/iPad: Chia sẻ > Thêm vào Màn hình chính (chạy toàn màn hình nhưng iOS không có nút Cài app).
+- **Cài app**: bấm nút "Cài app" ở thanh trên (Chrome/Edge), hoặc menu trình duyệt > Cài đặt ứng dụng. Mở từ biểu tượng là toàn màn hình luôn.
 
 ## Màn hình và cập nhật
 
