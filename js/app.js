@@ -159,10 +159,24 @@ function buildSettingsDialog() {
   seg('Cách gọi tên nốt', 'Hiện trên phím đàn khi học bài.', 'solfege', [[false, 'C D E'], [true, 'Đô Rê Mi']]);
   seg('Cách gọi quãng tám', 'Đàn Yamaha gọi phím giữa là C3. Chuẩn quốc tế gọi là C4.', 'octave', [['yamaha', 'Yamaha'], ['intl', 'Quốc tế']]);
   body.replaceChildren(closeBtn(dlg), h('h3', { text: 'Cài đặt' }), h('p', { class: 'sub', text: 'Mọi thay đổi được lưu ngay trên trình duyệt này.' }), ...rows,
-    h('div', { class: 'set-block' },
-      h('b', { text: `Nốt Rơi ${VERSION}, làm bởi ${AUTHOR}` }),
-      h('ul', { class: 'notes' }, ...NOTES.map((n) => h('li', { text: n })))),
+    notesBlock(),
     h('div', { class: 'dlg-actions' }, h('button', { type: 'button', class: 'btn-ghost', text: 'Khôi phục mặc định', onclick: () => { Object.assign(S, DEFAULTS); saveSettingsSoon(); buildSettingsDialog(); } })));
+}
+
+// Ghi chú phiên bản: mặc định chỉ hiện 3 dòng mới nhất, bấm Xem thêm mới hiện hết.
+function notesBlock() {
+  const SHOW = 3;
+  let all = false;
+  const ul = h('ul', { class: 'notes' });
+  const more = h('button', { type: 'button', class: 'notes-more' });
+  const paint = () => {
+    ul.replaceChildren(...(all ? NOTES : NOTES.slice(0, SHOW)).map((n) => h('li', { text: n })));
+    more.textContent = all ? 'Thu gọn' : `Xem thêm (${NOTES.length - SHOW})`;
+    more.hidden = NOTES.length <= SHOW;
+  };
+  more.addEventListener('click', () => { all = !all; paint(); });
+  paint();
+  return h('div', { class: 'set-block' }, h('b', { text: `Nốt Rơi ${VERSION}, làm bởi ${AUTHOR}` }), ul, more);
 }
 
 const fmtDate = (ts) => new Date(ts).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });

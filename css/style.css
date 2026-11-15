@@ -737,3 +737,6 @@ dialog.mixer-dlg { width: min(80rem, calc(100vw - 4rem)); }
 /* Logo dùng chính biểu tượng app */
 .logo { background: none; box-shadow: none; transform: none; width: 3rem; height: 3rem; border-radius: 0; }
 .logo img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0.25rem 0.5rem rgba(0,0,0,0.35)); }
+
+.notes-more { margin-top: 0.5rem; padding: 0.375rem 1rem; border-radius: 62.4375rem; font-weight: 700; font-size: 0.9375rem; color: var(--brass-2); background: rgba(255,255,255,0.1); }
+.notes-more:hover { background: rgba(255,255,255,0.18); }
