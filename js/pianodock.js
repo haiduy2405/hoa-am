@@ -37,12 +37,50 @@ export function createPianoDock({ root, hub, h, noteLabel, acceptCh }) {
   const chordEl = h('b', { class: 'pd-chord', text: '–' });
   const notesEl = h('span', { class: 'pd-notes', text: 'Bấm một phím trên đàn' });
   const cv = h('canvas', { class: 'pd-keys', 'aria-label': 'Phím đàn' });
-  root.append(
+  const flow = h('canvas', { class: 'pd-flow', 'aria-hidden': 'true' });
+  root.append(flow,
     h('div', { class: 'pd-lane' }, h('div', { class: 'pd-read', 'aria-live': 'polite' }, h('span', { class: 'pd-lbl', text: 'Hợp âm' }), chordEl, h('span', { class: 'pd-lbl', text: 'Đang bấm' }), notesEl)),
     h('div', { class: 'pd-board' }, cv));
 
   const whites = [];
   for (let n = FIRST; n <= LAST; n++) if (!BLACK.has(n % 12)) whites.push(n);
+
+  // Vị trí ngang của một phím (dùng chung cho phím đàn và nốt bay lên).
+  function geo(n, W) {
+    const kw = W / whites.length, bw = kw * 0.62;
+    if (BLACK.has(n % 12)) return { x: whites.indexOf(n - 1) * kw + kw - bw / 2, w: bw, black: true };
+    return { x: whites.indexOf(n) * kw + kw * 0.06, w: kw * 0.88, black: false };
+  }
+
+  // Nốt bay lên kiểu Synthesia: giữ phím thì thanh dài ra, nhả tay thì thanh tách ra và bay đi.
+  const bars = [];
+  const SPEED = 0.016; // rem mỗi ms (16 rem mỗi giây)
+  let raf = 0;
+  function drawFlow(now) {
+    const W = flow.clientWidth, H = flow.clientHeight;
+    if (!W || !H) return;
+    const dpr = window.devicePixelRatio || 1;
+    if (flow.width !== Math.round(W * dpr) || flow.height !== Math.round(H * dpr)) { flow.width = Math.round(W * dpr); flow.height = Math.round(H * dpr); }
+    const g = flow.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, W, H);
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    const v = SPEED * rem; // px mỗi ms
+    for (let i = bars.length - 1; i >= 0; i--) {
+      const b = bars[i];
+      const top = H - (now - b.t0) * v;
+      const bot = b.t1 ? H - (now - b.t1) * v : H;
+      if (bot < 0) { bars.splice(i, 1); continue; }
+      const { x, w, black } = geo(b.n, W);
+      const y = Math.max(-8, top), hh = Math.max(6, bot - y);
+      g.fillStyle = black ? '#ff9a3c' : '#ffd84d';
+      g.shadowColor = black ? 'rgba(255,154,60,0.9)' : 'rgba(255,216,77,0.9)'; g.shadowBlur = 14;
+      g.beginPath(); g.roundRect(x, y, w, hh, Math.min(10, w / 2)); g.fill();
+    }
+    g.shadowBlur = 0;
+  }
+  function loop(now) { drawFlow(now); raf = bars.length ? requestAnimationFrame(loop) : 0; }
+  const kick = () => { if (!raf) raf = requestAnimationFrame(loop); };
 
   function draw() {
     const W = cv.clientWidth, H = cv.clientHeight;
@@ -76,12 +114,17 @@ export function createPianoDock({ root, hub, h, noteLabel, acceptCh }) {
   }
   hub.on('note', (e) => {
     if (acceptCh && !acceptCh(e.ch)) return;
-    e.on ? held.add(e.note) : held.delete(e.note);
+    noteOn(e.note, e.on);
     readout();
   });
-  hub.on('panic', () => { held.clear(); readout(); });
+  function noteOn(n, on) {
+    if (on) { if (!held.has(n)) { held.add(n); if (n >= FIRST && n <= LAST) { bars.push({ n, t0: performance.now(), t1: 0 }); kick(); } } }
+    else { held.delete(n); const now = performance.now(); for (const b of bars) if (b.n === n && !b.t1) b.t1 = now; }
+  }
+  const releaseAll = () => { for (const n of [...held]) noteOn(n, false); readout(); };
+  hub.on('panic', releaseAll);
   new ResizeObserver(draw).observe(cv);
-  window.addEventListener('blur', () => { held.clear(); readout(); });
+  window.addEventListener('blur', releaseAll);
   draw();
-  return { press: (n) => { held.add(n); readout(); }, release: (n) => { held.delete(n); readout(); }, held: () => [...held] };
+  return { press: (n) => { noteOn(n, true); readout(); }, release: (n) => { noteOn(n, false); readout(); }, held: () => [...held] };
 }

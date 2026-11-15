@@ -616,7 +616,7 @@ dialog.guide { width: min(46rem, calc(100vw - 4rem)); }
 
 /* Đàn ở đáy màn hình */
 body { padding-bottom: 19rem; }
-.piano-dock { position: fixed; left: 0; right: 0; bottom: 0; height: 18.5rem; z-index: 5; display: grid; grid-template-rows: 8rem 1fr; background: linear-gradient(#2a2480, #3a2f9a); border-top: 0.25rem solid var(--brass); box-shadow: 0 -1rem 3rem rgba(0,0,0,0.35); }
+.piano-dock { position: fixed; left: 0; right: 0; bottom: 0; height: 18.5rem; z-index: 5; display: grid; grid-template-rows: 8rem 1fr; background: none; }
 body.learn-open .piano-dock { display: none; }
 .pd-lane { position: relative; padding: 0.75rem 1.5rem; }
 .pd-read { display: inline-grid; grid-template-columns: auto 1fr; align-items: center; gap: 0.125rem 0.875rem; min-width: 22rem; padding: 0.625rem 1.25rem; border-radius: 1.25rem; background: rgba(255,255,255,0.12); border: 0.125rem solid rgba(255,255,255,0.25); }
@@ -628,3 +628,8 @@ body.learn-open .piano-dock { display: none; }
 .studio-view .pv-box, .pv-box { height: 11rem; }
 .pd-board { min-height: 0; overflow: hidden; }
 .pd-keys { position: absolute; inset: 0; }
+
+/* Nốt bay lên phía trên đàn, chung nền với trang */
+.pd-flow { position: absolute; left: 0; width: 100%; bottom: 10.5rem; height: 32rem; pointer-events: none; -webkit-mask-image: linear-gradient(to top, #000 45%, transparent); mask-image: linear-gradient(to top, #000 45%, transparent); }
+.pd-board { box-shadow: 0 -0.5rem 1.5rem rgba(0,0,0,0.25); }
+.pd-lane { pointer-events: none; }
