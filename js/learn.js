@@ -893,7 +893,7 @@ export function createLearn(env) {
   function renderPlay() {
     if (!els.play) return;
     els.play.setAttribute('aria-pressed', String(running));
-    els.play.innerHTML = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">' + (running ? '<rect x="3" y="3" width="10" height="10" rx="1.5" fill="currentColor"/>' : '<path d="M4 2.5v11l9-5.5z" fill="currentColor"/>') + '</svg><span>' + (running ? 'Tạm dừng' : finished ? 'Chơi lại' : 'Bắt đầu') + '</span>';
+    els.play.innerHTML = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">' + (running ? '<rect x="3" y="3" width="10" height="10" rx="1.5" fill="currentColor"/>' : '<path d="M4 2.5v11l9-5.5z" fill="currentColor"/>') + '</svg><span>' + (running ? 'Tạm dừng' : finished ? 'Chơi lại' : 'Tiếp tục') + '</span>';
   }
 
   function rebuild(keepPos = true) {
@@ -1001,7 +1001,11 @@ export function createLearn(env) {
       els.bestEl);
     els.result = h('div', { class: 'learn-result', hidden: true });
     els.stage = h('div', { class: 'learn-stage' }, els.canvas, els.hud, els.game, els.banner, els.result, els.panel);
-    els.root.append(top, deck, els.stage);
+    const backBtn = h('button', { type: 'button', class: 'back-btn', 'aria-label': 'Quay lại', title: 'Quay lại', onclick: close });
+    backBtn.innerHTML = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
+    els.play.classList.add('learn-pause');
+    els.stage.append(h('div', { class: 'learn-nav' }, backBtn, els.play, els.title));
+    els.root.append(els.stage);
     document.body.append(els.root);
     new ResizeObserver(() => { if (open) layout(); }).observe(els.stage);
     document.addEventListener('keydown', onKey);
@@ -1013,7 +1017,8 @@ export function createLearn(env) {
     const t = e.target;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA')) return;
     const k = e.key.toLowerCase();
-    if (k === 'f') { e.preventDefault(); toggleFull(); }
+    if (k === ' ') { e.preventDefault(); toggle(); }
+    else if (k === 'f') { e.preventDefault(); toggleFull(); }
     else if (k === 'escape' && !document.fullscreenElement) { e.preventDefault(); close(); }
     else if (k === 'r') { e.preventDefault(); seek(0); resetStats(); }
   }
@@ -1063,7 +1068,7 @@ export function createLearn(env) {
     clearInterval(timer);
     cancelAnimationFrame(raf);
     raf = requestAnimationFrame(frame);
-    els.play.focus({ preventScroll: true });
+    toggle(); // vào chơi là đếm 3-2-1 rồi chạy luôn
   }
 
   function close() {

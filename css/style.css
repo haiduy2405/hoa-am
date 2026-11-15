@@ -764,3 +764,8 @@ dialog.mixer-dlg { width: min(80rem, calc(100vw - 4rem)); }
 .studio-left { display: flex; align-items: center; gap: 1rem; min-width: 0; }
 .back-btn { flex: none; display: grid; place-items: center; width: 3.5rem; height: 3.5rem; border-radius: 50%; background: rgba(255,255,255,0.14); border: 0.1875rem solid rgba(255,255,255,0.35); color: #fff; transition: background 0.12s, transform 0.12s; }
 .back-btn:hover { background: rgba(255,255,255,0.26); transform: translateX(-2px); }
+
+.learn-nav { position: absolute; left: 0.875rem; top: 0.75rem; z-index: 5; display: flex; align-items: center; gap: 0.75rem; }
+.learn-nav .learn-title { font: 800 1.25rem/1.2 'Baloo 2', var(--serif); color: #fff; text-shadow: 0 0.125rem 0.5rem rgba(0,0,0,0.5); max-width: 24rem; }
+.learn-pause { min-height: 3.5rem; padding: 0.5rem 1.5rem; border-radius: 62.4375rem; display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 1.0625rem; background: #ffc93c; color: #1b1408; box-shadow: 0 0.25rem 0 #c99400; }
+.learn-hud { top: 5rem; }

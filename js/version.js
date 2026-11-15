@@ -1,7 +1,8 @@
 // Mỗi lần có thay đổi phải tăng VERSION (sửa nhỏ: số cuối, thêm tính năng: số giữa) và cập nhật NOTES.
-export const VERSION = '0.19.8';
+export const VERSION = '0.19.9';
 export const AUTHOR = 'duyluma';
 export const NOTES = [
+  'Màn chơi gọn lại: bỏ thanh điều khiển, nốt rơi rộng hơn; bấm VÀO CHƠI là đếm 3-2-1 rồi chơi luôn',
   'Bỏ nút Hủy bài, thêm nút mũi tên quay lại ở góc trái màn bài',
   'Màn bài chỉ còn Hủy bài và VÀO CHƠI, Kho bài và Nhập File nằm ở trang chủ',
   'Nút Kho bài thiết kế lại: màu xanh dương, có icon',
