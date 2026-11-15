@@ -372,15 +372,29 @@ function showUpdate(ver) {
   document.querySelectorAll('dialog[open]').forEach((d) => d.close());
   const dlg = h('dialog', { class: 'update-dlg', id: 'dlg-update' });
   dlg.addEventListener('cancel', (e) => e.preventDefault()); // Esc không đóng được
+  const status = h('p', { class: 'hint', text: '' });
   const go = h('button', { type: 'button', class: 'btn-primary big', text: 'Cập nhật ngay', onclick: async () => {
     go.disabled = true; go.textContent = 'Đang cập nhật...';
-    try { for (const k of await caches.keys()) await caches.delete(k); } catch (e) { /* bỏ qua */ }
-    try { for (const r of await navigator.serviceWorker.getRegistrations()) await r.update(); } catch (e) { /* bỏ qua */ }
-    location.reload();
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    try {
+      // GitHub Pages có thể mới đổi một phần; đợi tới khi các file thường (không kèm ?t=) cũng đã là bản mới rồi mới tải lại.
+      let fresh = false;
+      for (let i = 0; i < 40 && !fresh; i++) {
+        try {
+          const t = await (await fetch('js/version.js', { cache: 'reload' })).text();
+          fresh = t.includes(`'${ver}'`);
+        } catch (e) { /* thử lại */ }
+        if (!fresh) { status.textContent = 'Máy chủ đang đổi sang bản mới, vài giây nữa...'; await sleep(3000); }
+      }
+      for (const k of await caches.keys()) await caches.delete(k);
+      for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+    } catch (e) { /* vẫn tải lại */ }
+    location.replace(location.pathname + '?u=' + Date.now());
   } });
   dlg.append(h('div', { class: 'dlg' },
     h('h3', { text: 'Có phiên bản mới' }),
     h('p', { class: 'sub', text: `Bạn đang dùng ${VERSION}, bản mới nhất là ${ver}. Cần cập nhật để tiếp tục dùng. Bài đang mở đã được lưu.` }),
+    status,
     h('div', { class: 'dlg-actions' }, go)));
   document.body.append(dlg);
   dlg.showModal();
