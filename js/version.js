@@ -1,7 +1,8 @@
 // Mỗi lần có thay đổi phải tăng VERSION (sửa nhỏ: số cuối, thêm tính năng: số giữa) và cập nhật NOTES.
-export const VERSION = '0.17.2';
+export const VERSION = '0.17.3';
 export const AUTHOR = 'duyluma';
 export const NOTES = [
+  'Phiên bản, Made by duyluma và năm hiện tại hiện ngay dưới tên app ở góc trên trái',
   'Nút Cài ra màn hình: hộp hỏi Cài / Hủy trước, báo rõ khi app đã cài sẵn; chỉnh manifest (id, màu)',
   'Thêm nút Cài ra màn hình to, nổi bật, bên trái nút Cài đặt (có hướng dẫn nếu Chrome chưa cho cài)',
   'Nốt bay lên kiểu Synthesia khi bấm phím (giữ thì dài ra, nhả thì tách ra bay đi); bỏ đường kẻ, đàn chung nền với trang',

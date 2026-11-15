@@ -315,6 +315,7 @@ $$('dialog').forEach((d) => d.addEventListener('click', (e) => { if (e.target ==
 window.addEventListener('beforeunload', () => saveNow(studio.getSong()));
 $('#foot-ver').textContent = 'v' + VERSION;
 $('#foot-author').textContent = AUTHOR;
+$('#foot-year').textContent = String(new Date().getFullYear());
 
 // Kéo thả file .mid vào bất kỳ đâu
 {

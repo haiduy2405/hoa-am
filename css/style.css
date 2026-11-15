@@ -641,3 +641,9 @@ body.learn-open .piano-dock { display: none; }
 
 dialog.guide.small { width: min(34rem, calc(100vw - 4rem)); }
 .dlg-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+/* Tên app kèm phiên bản, tác giả, năm */
+.brand-text { display: grid; gap: 0.0625rem; line-height: 1; }
+.brand-meta { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; font-weight: 600; color: var(--ink-3); white-space: nowrap; }
+.brand-meta b { color: var(--brass-2); font-weight: 800; }
+.brand-meta i { width: 0.1875rem; height: 0.1875rem; border-radius: 50%; background: var(--ink-3); }
