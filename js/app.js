@@ -297,8 +297,6 @@ document.addEventListener('keydown', (e) => {
 hub.on('devices', renderDevice);
 $('#btn-device').addEventListener('click', () => openDlg('#dlg-device', buildDeviceDialog));
 $('#btn-settings').addEventListener('click', () => openDlg('#dlg-settings', buildSettingsDialog));
-$('#btn-kho').addEventListener('click', () => buildKhoDialog());
-$('#btn-library').addEventListener('click', () => openDlg('#dlg-library', buildLibraryDialog));
 $$('dialog').forEach((d) => d.addEventListener('click', (e) => { if (e.target === d) d.close(); }));
 window.addEventListener('beforeunload', () => saveNow(studio.getSong()));
 $('#foot-ver').textContent = 'v' + VERSION;
