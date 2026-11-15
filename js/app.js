@@ -376,25 +376,41 @@ let installEvt = null;
 const installBtn = $('#btn-install');
 const isInstalled = () => matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone;
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; });
-function showInstallHelp() {
-  const dlg = h('dialog', { class: 'guide' });
-  dlg.append(h('div', { class: 'dlg' }, h('h3', { text: 'Cài Nốt Rơi ra màn hình' }),
-    h('p', { class: 'sub', text: 'Mở web trong tab Chrome thường (không mở từ shortcut), rồi làm theo:' }),
-    h('ol', { class: 'guide-steps' },
-      h('li', {}, h('b', { text: 'Bấm biểu tượng cài đặt' }), h('span', { text: 'Nằm bên phải thanh địa chỉ. Hoặc vào menu ⋮, chọn Truyền, lưu và chia sẻ, rồi Cài đặt Nốt Rơi.' })),
-      h('li', {}, h('b', { text: 'Bấm Cài đặt' }), h('span', { text: 'Nốt Rơi sẽ có shortcut ngoài desktop và mở toàn màn hình như một app.' }))),
-    h('div', { class: 'dlg-actions' }, h('button', { type: 'button', class: 'btn-primary big', text: 'Đã hiểu', onclick: () => dlg.close() }))));
+// Hộp thoại nhỏ của app: tiêu đề, lời nhắn, nút đồng ý (tùy chọn) và nút đóng.
+function askDialog({ title, text, steps, ok, onOk, cancel = 'Hủy' }) {
+  const dlg = h('dialog', { class: 'guide small' });
+  dlg.append(h('div', { class: 'dlg' }, h('h3', { text: title }), h('p', { class: 'sub', text }),
+    steps ? h('ol', { class: 'guide-steps' }, ...steps.map(([t, d]) => h('li', {}, h('b', { text: t }), h('span', { text: d })))) : null,
+    h('div', { class: 'dlg-actions' },
+      ok ? h('button', { type: 'button', class: 'btn-primary big', text: ok, onclick: () => { dlg.close(); onOk && onOk(); } }) : null,
+      h('button', { type: 'button', class: 'btn-ghost big', text: cancel, onclick: () => dlg.close() }))));
   dlg.addEventListener('close', () => dlg.remove());
   document.body.append(dlg);
   dlg.showModal();
 }
-installBtn.addEventListener('click', async () => {
+async function onInstallClick() {
   if (isInstalled()) { toast('Bạn đang dùng app đã cài rồi.'); return; }
-  if (!installEvt) { showInstallHelp(); return; }
-  installEvt.prompt();
-  await installEvt.userChoice.catch(() => {});
-  installEvt = null;
-});
+  if (installEvt) {
+    askDialog({
+      title: 'Cài Nốt Rơi ra màn hình?', text: 'Nốt Rơi sẽ có shortcut ngoài desktop, mở toàn màn hình như một app. Sau khi bấm Cài, Chrome sẽ hỏi xác nhận một lần nữa.', ok: 'Cài', cancel: 'Hủy',
+      onOk: async () => { const e = installEvt; installEvt = null; e.prompt(); await e.userChoice.catch(() => {}); },
+    });
+    return;
+  }
+  let already = false;
+  try { already = !!(navigator.getInstalledRelatedApps && (await navigator.getInstalledRelatedApps()).length); } catch (e) { /* bỏ qua */ }
+  if (already) {
+    askDialog({
+      title: 'Nốt Rơi đã có trên máy này', text: 'Chrome đã cài sẵn app, nên không cho cài thêm. Mở shortcut Nốt Rơi ngoài desktop để dùng. Muốn cài lại cho đúng tên và biểu tượng mới:',
+      steps: [['Gỡ bản cũ', 'Mở app, bấm menu ⋮ ở góc cửa sổ, chọn Gỡ cài đặt Nốt Rơi.'], ['Cài lại', 'Mở web này trong tab Chrome thường rồi bấm Cài ra màn hình.']], cancel: 'Đã hiểu',
+    });
+    return;
+  }
+  askDialog({
+    title: 'Chrome chưa cho cài lúc này', text: 'Đợi vài giây rồi bấm lại. Nếu vẫn thế, mở web trong tab Chrome thường (không mở từ shortcut) rồi bấm biểu tượng cài đặt bên phải thanh địa chỉ, hoặc menu ⋮ → Truyền, lưu và chia sẻ → Cài đặt Nốt Rơi.', cancel: 'Đã hiểu',
+  });
+}
+installBtn.addEventListener('click', onInstallClick);
 window.addEventListener('appinstalled', () => { toast('Đã cài Nốt Rơi ra màn hình.'); });
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
 
