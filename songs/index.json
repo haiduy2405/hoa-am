@@ -1,0 +1,571 @@
+{
+ "songs": [
+  {
+   "file": "autumn-leaves-jazz-piano.mid",
+   "title": "Autumn Leaves (Jazz Piano)",
+   "artist": "",
+   "cat": "Quốc tế",
+   "dur": 196,
+   "notes": 864,
+   "bpm": 120
+  },
+  {
+   "file": "ballade-pour-adeline-richard-clayderman.mid",
+   "title": "Ballade Pour Adeline",
+   "artist": "Richard Clayderman",
+   "cat": "Quốc tế",
+   "dur": 175,
+   "notes": 912,
+   "bpm": 60
+  },
+  {
+   "file": "believer-imagine-dragons.mid",
+   "title": "Believer",
+   "artist": "Imagine Dragons",
+   "cat": "Quốc tế",
+   "dur": 191,
+   "notes": 1468,
+   "bpm": 188
+  },
+  {
+   "file": "biet-khuc-cho-nhau-tan-dong-song-ly-biet-ost-biet-khuc-cho-nhau.mid",
+   "title": "Biệt Khúc Cho Nhau",
+   "artist": "Tấn Đồng (Song Lý Biệt OST)",
+   "cat": "Nhạc Việt",
+   "dur": 246,
+   "notes": 1604,
+   "bpm": 95
+  },
+  {
+   "file": "alphatbet-song.mid",
+   "title": "Bài hát bảng chữ cái (Alphabet Song)",
+   "artist": "",
+   "cat": "Thiếu nhi & lễ hội",
+   "dur": 24,
+   "notes": 70,
+   "bpm": 120
+  },
+  {
+   "file": "beo-dat-may-troi-quan-ho-bac-ninh-beo-dat-may-troi.mid",
+   "title": "Bèo Dạt Mây Trôi",
+   "artist": "Quan họ Bắc Ninh",
+   "cat": "Nhạc Việt",
+   "dur": 56,
+   "notes": 186,
+   "bpm": 60
+  },
+  {
+   "file": "bong-hoa-dep-nhat-quan-ap.mid",
+   "title": "Bông Hoa Đẹp Nhất",
+   "artist": "Quân A.P",
+   "cat": "Nhạc Việt",
+   "dur": 202,
+   "notes": 841,
+   "bpm": 70
+  },
+  {
+   "file": "ban-tinh-ca-mua-dong.mid",
+   "title": "Bản Tình Ca Mùa Đông",
+   "artist": "",
+   "cat": "Nhạc Việt",
+   "dur": 276,
+   "notes": 988,
+   "bpm": 97
+  },
+  {
+   "file": "canthelpfallinginlove.mid",
+   "title": "Can't Help Falling in Love",
+   "artist": "Elvis Presley",
+   "cat": "Quốc tế",
+   "dur": 98,
+   "notes": 255,
+   "bpm": 85
+  },
+  {
+   "file": "canon-in-d-johann-pachelbel.mid",
+   "title": "Canon in D",
+   "artist": "Johann Pachelbel",
+   "cat": "Cổ điển",
+   "dur": 245,
+   "notes": 1589,
+   "bpm": 100
+  },
+  {
+   "file": "carol-of-the-bells.mid",
+   "title": "Carol of the Bells",
+   "artist": "",
+   "cat": "Thiếu nhi & lễ hội",
+   "dur": 121,
+   "notes": 1264,
+   "bpm": 180
+  },
+  {
+   "file": "chuyen-doi-ta-dalab-chuyen-doi-ta.mid",
+   "title": "Chuyện Đôi Ta",
+   "artist": "Da LAB",
+   "cat": "Nhạc Việt",
+   "dur": 190,
+   "notes": 951,
+   "bpm": 97
+  },
+  {
+   "file": "comptine-dun-autre-ete-lapres-midi-yann-tiersen.mid",
+   "title": "Comptine d'un autre été: L'après-midi",
+   "artist": "Yann Tiersen",
+   "cat": "Phim & game",
+   "dur": 134,
+   "notes": 1018,
+   "bpm": 95
+  },
+  {
+   "file": "co-ai-thuong-em-nhu-anh-bui-cong-nam-co-ai-thuong-em-nhu-anh.mid",
+   "title": "Có Ai Thương Em Như Anh",
+   "artist": "Bùi Công Nam",
+   "cat": "Nhạc Việt",
+   "dur": 108,
+   "notes": 443,
+   "bpm": 100
+  },
+  {
+   "file": "co-hen-voi-thanh-xuan-monstar-co-hen-voi-thanh-xuan.mid",
+   "title": "Có Hẹn Với Thanh Xuân",
+   "artist": "MONSTAR",
+   "cat": "Nhạc Việt",
+   "dur": 182,
+   "notes": 965,
+   "bpm": 95
+  },
+  {
+   "file": "golden-hour-jvke-updated-ver.mid",
+   "title": "Golden Hour",
+   "artist": "JVKE",
+   "cat": "Quốc tế",
+   "dur": 209,
+   "notes": 2064,
+   "bpm": 96
+  },
+  {
+   "file": "gymnopedie-no-1-satie.mid",
+   "title": "Gymnopédie No. 1",
+   "artist": "Erik Satie",
+   "cat": "Cổ điển",
+   "dur": 262,
+   "notes": 455,
+   "bpm": 54
+  },
+  {
+   "file": "happy-new-year.mid",
+   "title": "Happy New Year",
+   "artist": "",
+   "cat": "Thiếu nhi & lễ hội",
+   "dur": 99,
+   "notes": 337,
+   "bpm": 70
+  },
+  {
+   "file": "haru-haru-full-version.mid",
+   "title": "Haru Haru",
+   "artist": "BIGBANG",
+   "cat": "Hoa & Hàn",
+   "dur": 298,
+   "notes": 1834,
+   "bpm": 108
+  },
+  {
+   "file": "hes-a-pirate.mid",
+   "title": "He's a Pirate",
+   "artist": "Klaus Badelt (Pirates of the Caribbean)",
+   "cat": "Phim & game",
+   "dur": 79,
+   "notes": 1285,
+   "bpm": 207
+  },
+  {
+   "file": "hongkong-1-chuyen-tinh-luot-qua-nguyen-trong-tai-hong-kong-1-advanced.mid",
+   "title": "Hongkong1 (Chuyện Tình Lướt Qua)",
+   "artist": "Nguyễn Trọng Tài",
+   "cat": "Nhạc Việt",
+   "dur": 228,
+   "notes": 1457,
+   "bpm": 115
+  },
+  {
+   "file": "interstellar-suite-hans-zimmer.mid",
+   "title": "Interstellar Suite",
+   "artist": "Hans Zimmer",
+   "cat": "Phim & game",
+   "dur": 888,
+   "notes": 5249,
+   "bpm": 80
+  },
+  {
+   "file": "je-te-laisserai-des-mots-patrick-watson.mid",
+   "title": "Je te laisserai des mots",
+   "artist": "Patrick Watson",
+   "cat": "Quốc tế",
+   "dur": 144,
+   "notes": 830,
+   "bpm": 120
+  },
+  {
+   "file": "jingle-bells-1.mid",
+   "title": "Jingle Bells (bản 1)",
+   "artist": "",
+   "cat": "Thiếu nhi & lễ hội",
+   "dur": 32,
+   "notes": 78,
+   "bpm": 120
+  },
+  {
+   "file": "jinglebells.mid",
+   "title": "Jingle Bells (bản 2)",
+   "artist": "",
+   "cat": "Thiếu nhi & lễ hội",
+   "dur": 32,
+   "notes": 74,
+   "bpm": 120
+  },
+  {
+   "file": "kem-duyen.mid",
+   "title": "Kém Duyên",
+   "artist": "Rum x NIT x Masew",
+   "cat": "Nhạc Việt",
+   "dur": 182,
+   "notes": 1108,
+   "bpm": 104
+  },
+  {
+   "file": "etude-s-1413-in-g-minor-la-campanella-liszt.mid",
+   "title": "La Campanella (Étude S.141 No.3)",
+   "artist": "Franz Liszt",
+   "cat": "Cổ điển",
+   "dur": 250,
+   "notes": 4123,
+   "bpm": 102
+  },
+  {
+   "file": "love-story-indila-love-story-indila-piano.mid",
+   "title": "Love Story",
+   "artist": "Indila",
+   "cat": "Quốc tế",
+   "dur": 110,
+   "notes": 752,
+   "bpm": 180
+  },
+  {
+   "file": "lovely-billie-eilish-with-khalid.mid",
+   "title": "Lovely",
+   "artist": "Billie Eilish & Khalid",
+   "cat": "Quốc tế",
+   "dur": 192,
+   "notes": 750,
+   "bpm": 115
+  },
+  {
+   "file": "dandelions-promise-pu-gong-ying-de-yue-ding-hen-uoc-bo-cong-anh-zhou-jie-lun-jay-chou.mid",
+   "title": "Lời Hứa Bồ Công Anh (蒲公英的约定)",
+   "artist": "Châu Kiệt Luân (Jay Chou)",
+   "cat": "Hoa & Hàn",
+   "dur": 288,
+   "notes": 1361,
+   "bpm": 71
+  },
+  {
+   "file": "mariagedamour.mid",
+   "title": "Mariage d'Amour",
+   "artist": "Paul de Senneville",
+   "cat": "Quốc tế",
+   "dur": 85,
+   "notes": 380,
+   "bpm": 120
+  },
+  {
+   "file": "undertale-megalovania-piano-ver-3.mid",
+   "title": "Megalovania (Undertale)",
+   "artist": "Toby Fox",
+   "cat": "Phim & game",
+   "dur": 156,
+   "notes": 1816,
+   "bpm": 120
+  },
+  {
+   "file": "memory.mid",
+   "title": "Memory (Cats)",
+   "artist": "",
+   "cat": "Phim & game",
+   "dur": 128,
+   "notes": 538,
+   "bpm": 60
+  },
+  {
+   "file": "missionimpossible.mid",
+   "title": "Mission: Impossible Theme",
+   "artist": "Lalo Schifrin",
+   "cat": "Phim & game",
+   "dur": 80,
+   "notes": 336,
+   "bpm": 176
+  },
+  {
+   "file": "sonate-no-14-moonlight-1st-movement.mid",
+   "title": "Moonlight Sonata (Mvt. 1)",
+   "artist": "Ludwig van Beethoven",
+   "cat": "Cổ điển",
+   "dur": 376,
+   "notes": 1147,
+   "bpm": 44
+  },
+  {
+   "file": "my-heart-will-go-on.mid",
+   "title": "My Heart Will Go On",
+   "artist": "Celine Dion (Titanic)",
+   "cat": "Quốc tế",
+   "dur": 286,
+   "notes": 1451,
+   "bpm": 90
+  },
+  {
+   "file": "chopin-nocturne-op-9-no-2-e-flat-major.mid",
+   "title": "Nocturne Op. 9 No. 2",
+   "artist": "Frédéric Chopin",
+   "cat": "Cổ điển",
+   "dur": 219,
+   "notes": 1299,
+   "bpm": 60
+  },
+  {
+   "file": "nothings-gonna-change-my-love-for-you-george-benson.mid",
+   "title": "Nothing's Gonna Change My Love for You",
+   "artist": "George Benson",
+   "cat": "Quốc tế",
+   "dur": 154,
+   "notes": 659,
+   "bpm": 70
+  },
+  {
+   "file": "nuoc-mat-em-lau-bang-tinh-yeu-moi-dalab.mid",
+   "title": "Nước Mắt Em Lau Bằng Tình Yêu Mới",
+   "artist": "Da LAB",
+   "cat": "Nhạc Việt",
+   "dur": 192,
+   "notes": 871,
+   "bpm": 90
+  },
+  {
+   "file": "odetojoy.mid",
+   "title": "Ode to Joy",
+   "artist": "Ludwig van Beethoven",
+   "cat": "Cổ điển",
+   "dur": 32,
+   "notes": 85,
+   "bpm": 120
+  },
+  {
+   "file": "passacaglia-handelhalvorsen.mid",
+   "title": "Passacaglia",
+   "artist": "Handel – Halvorsen",
+   "cat": "Cổ điển",
+   "dur": 137,
+   "notes": 1030,
+   "bpm": 130
+  },
+  {
+   "file": "ed-sheeran-perfect-piano-arrangement.mid",
+   "title": "Perfect",
+   "artist": "Ed Sheeran",
+   "cat": "Quốc tế",
+   "dur": 261,
+   "notes": 1831,
+   "bpm": 94
+  },
+  {
+   "file": "prelude-i-in-c-major-bwv-846-well-tempered-clavier-first-book.mid",
+   "title": "Prelude in C Major, BWV 846",
+   "artist": "Johann Sebastian Bach",
+   "cat": "Cổ điển",
+   "dur": 131,
+   "notes": 549,
+   "bpm": 72
+  },
+  {
+   "file": "rightherewaiting.mid",
+   "title": "Right Here Waiting",
+   "artist": "Richard Marx",
+   "cat": "Quốc tế",
+   "dur": 138,
+   "notes": 817,
+   "bpm": 120
+  },
+  {
+   "file": "sau-tat-ca-erik-st-319-sau-tat-ca.mid",
+   "title": "Sau Tất Cả",
+   "artist": "ERIK",
+   "cat": "Nhạc Việt",
+   "dur": 217,
+   "notes": 812,
+   "bpm": 80
+  },
+  {
+   "file": "someone-you-loved.mid",
+   "title": "Someone You Loved",
+   "artist": "Lewis Capaldi",
+   "cat": "Quốc tế",
+   "dur": 168,
+   "notes": 1037,
+   "bpm": 60
+  },
+  {
+   "file": "super-mario-bros-main-theme.mid",
+   "title": "Super Mario Bros. Main Theme",
+   "artist": "Koji Kondo",
+   "cat": "Phim & game",
+   "dur": 113,
+   "notes": 1042,
+   "bpm": 180
+  },
+  {
+   "file": "suyt-nua-thi-andiez-suyt-nua-thi.mid",
+   "title": "Suýt Nữa Thì",
+   "artist": "Andiez",
+   "cat": "Nhạc Việt",
+   "dur": 137,
+   "notes": 474,
+   "bpm": 65
+  },
+  {
+   "file": "su-thanh-hoa-namn04817.mid",
+   "title": "Sứ Thanh Hoa (青花瓷)",
+   "artist": "Châu Kiệt Luân (Jay Chou)",
+   "cat": "Hoa & Hàn",
+   "dur": 82,
+   "notes": 278,
+   "bpm": 120
+  },
+  {
+   "file": "tay-trai-chi-trang.mid",
+   "title": "Tay Trái Chỉ Trăng",
+   "artist": "",
+   "cat": "Hoa & Hàn",
+   "dur": 183,
+   "notes": 705,
+   "bpm": 72
+  },
+  {
+   "file": "the-pink-panther-theme-henry-mancini-complete-song-piano.mid",
+   "title": "The Pink Panther Theme",
+   "artist": "Henry Mancini",
+   "cat": "Phim & game",
+   "dur": 149,
+   "notes": 774,
+   "bpm": 180
+  },
+  {
+   "file": "thewheelsonthebus.mid",
+   "title": "The Wheels on the Bus",
+   "artist": "",
+   "cat": "Thiếu nhi & lễ hội",
+   "dur": 16,
+   "notes": 55,
+   "bpm": 120
+  },
+  {
+   "file": "thu-cuoi.mid",
+   "title": "Thu Cuối",
+   "artist": "Mr.T",
+   "cat": "Nhạc Việt",
+   "dur": 189,
+   "notes": 1289,
+   "bpm": 86
+  },
+  {
+   "file": "thang-dien-justatee-thang-dien.mid",
+   "title": "Thằng Điên",
+   "artist": "JustaTee",
+   "cat": "Nhạc Việt",
+   "dur": 228,
+   "notes": 1454,
+   "bpm": 120
+  },
+  {
+   "file": "thoi-khong-sai-lech-nhac-hoa-thoi-khong-sai-lech.mid",
+   "title": "Thời Không Sai Lệch",
+   "artist": "",
+   "cat": "Hoa & Hàn",
+   "dur": 108,
+   "notes": 433,
+   "bpm": 60
+  },
+  {
+   "file": "turkish-march.mid",
+   "title": "Turkish March",
+   "artist": "Wolfgang Amadeus Mozart",
+   "cat": "Cổ điển",
+   "dur": 143,
+   "notes": 1817,
+   "bpm": 120
+  },
+  {
+   "file": "tay-du-ky.mid",
+   "title": "Tây Du Ký (nhạc phim)",
+   "artist": "",
+   "cat": "Phim & game",
+   "dur": 102,
+   "notes": 478,
+   "bpm": 120
+  },
+  {
+   "file": "disney-pixar-up-theme-piano.mid",
+   "title": "Up Theme",
+   "artist": "Disney Pixar",
+   "cat": "Phim & game",
+   "dur": 169,
+   "notes": 807,
+   "bpm": 175
+  },
+  {
+   "file": "vet-mua.mid",
+   "title": "Vệt Mưa",
+   "artist": "",
+   "cat": "Nhạc Việt",
+   "dur": 177,
+   "notes": 834,
+   "bpm": 65
+  },
+  {
+   "file": "waiting-for-you-mono-mono-viet-hoang-waiting-for-you-mono-viet-hoang.mid",
+   "title": "Waiting For You",
+   "artist": "MONO",
+   "cat": "Nhạc Việt",
+   "dur": 219,
+   "notes": 1211,
+   "bpm": 140
+  },
+  {
+   "file": "anh-sao-va-bau-troi-tri-x-ca-anh-sao-va-bau-troi.mid",
+   "title": "Ánh Sao Và Bầu Trời",
+   "artist": "T.R.I x Cá",
+   "cat": "Nhạc Việt",
+   "dur": 237,
+   "notes": 930,
+   "bpm": 70
+  },
+  {
+   "file": "tong-hua-guang-liang-tong-hua.mid",
+   "title": "Đồng Thoại (童话)",
+   "artist": "Quang Lương",
+   "cat": "Hoa & Hàn",
+   "dur": 154,
+   "notes": 579,
+   "bpm": 75
+  },
+  {
+   "file": "do-ta-khong-do-nang.mid",
+   "title": "Độ Ta Không Độ Nàng",
+   "artist": "",
+   "cat": "Hoa & Hàn",
+   "dur": 45,
+   "notes": 135,
+   "bpm": 86
+  }
+ ]
+}

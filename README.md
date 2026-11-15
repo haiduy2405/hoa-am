@@ -7,7 +7,7 @@ Chạy hoàn toàn trên trình duyệt, không cần cài gì, không gửi d�
 ## Dùng thế nào
 
 1. Mở trang bằng **Chrome hoặc Edge** trên máy tính (Safari và Firefox hỗ trợ Web MIDI hạn chế). Nối đàn qua cổng **USB TO HOST**, bật đàn, cho phép MIDI khi trình duyệt hỏi.
-2. Bấm **Mở file MIDI** (hoặc kéo thả file .mid vào trang). App đọc hết các nhạc cụ, tempo, nhịp, pedal. Tên bài lấy từ tên file, tự làm sạch (bỏ số thứ tự, gạch nối, chữ "midi", "karaoke", viết hoa chữ đầu), sửa lại được ở ô tên. Bài tự lưu trong **Bản nhạc của tôi**, lần sau mở lại tự vào bài đang dở.
+2. Bấm **Chọn bài từ kho** (63 bài có sẵn, gõ tên không cần dấu, lọc theo loại), hoặc **Mở file MIDI** / kéo thả file .mid vào trang. App đọc hết các nhạc cụ, tempo, nhịp, pedal. Tên bài lấy từ tên file, tự làm sạch (bỏ số thứ tự, gạch nối, chữ "midi", "karaoke", viết hoa chữ đầu), sửa lại được ở ô tên. Bài tự lưu trong **Bản nhạc của tôi**, lần sau mở lại tự vào bài đang dở.
 3. Bấm **Phát** (hoặc phím Space): bài chỉ phát qua cổng MIDI out của đàn. Chưa nối đàn thì app báo và mở hộp thoại kết nối. Kéo thanh tua để chọn chỗ phát, **Lặp** để phát lại liên tục. Mỗi phần có dải nốt nhìn nhanh và vạch chạy theo bài.
 4. Chỉnh từng phần: đổi âm sắc (128 âm sắc GM), âm lượng, tắt tiếng (M), chỉ nghe phần này (S), xóa phần. Cả bài: đổi tempo, đổi tông −12, −1, +1, +12 (phần trống giữ nguyên), Hoàn tác (Ctrl+Z) và Làm lại.
 5. **Tải file .mid** lưu bài đã chỉnh (nhiều track, giữ tempo, pedal, bánh pitch).
@@ -85,3 +85,9 @@ Test phủ đọc và ghi file MIDI (running status, tempo map, pedal), sửa n�
 - Chỉ dùng trên máy tính. Cỡ chữ gốc co giãn theo cửa sổ (16px ở 1600x900, 25,6px ở 2560x1440, tối đa 40px), mọi kích thước tính theo rem nên cả app, kể cả canvas nốt rơi, lớn theo màn hình.
 - Cứ 20 giây và mỗi lần quay lại cửa sổ, app hỏi máy chủ số phiên bản. Có bản mới thì hiện hộp thoại không đóng được, bấm **Cập nhật ngay** để tải lại. Bài đang mở được lưu trước đó.
 - Service worker luôn hỏi lại máy chủ (no-cache), nên bản mới đẩy lên là dùng ngay, không bị kẹt bộ nhớ đệm 10 phút của GitHub Pages. Phần còn lại là thời gian GitHub tự triển khai.
+
+## Kho bài có sẵn
+
+- Các bài nằm trong thư mục `songs/`, danh sách và tên bài ở `songs/index.json` (tên bài, ca sĩ, loại, thời lượng).
+- Thêm bài mới: chép file .mid vào `songs/` rồi thêm một dòng vào `index.json` (`file`, `title`, `artist`, `cat`, `dur` tính bằng giây, `notes`, `bpm`).
+- Mở một bài trong kho nhiều lần chỉ giữ một bản trong Bản nhạc của tôi (bản mở sau thay bản trước).

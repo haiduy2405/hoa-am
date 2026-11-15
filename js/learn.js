@@ -933,6 +933,7 @@ export function createLearn(env) {
     const top = h('div', { class: 'learn-top' },
       h('button', { type: 'button', class: 'btn-ghost', text: '← Quay lại', onclick: close }),
       els.title, h('span', { class: 'tools-spacer' }), els.out,
+      h('button', { type: 'button', class: 'btn-ghost', text: 'Kho bài', onclick: () => { if (running) toggle(); env.openKho && env.openKho(); } }),
       h('button', { type: 'button', class: 'btn-ghost', text: 'Mở file khác', onclick: () => { if (running) toggle(); env.pickFile && env.pickFile(); } }),
       els.panelBtn, els.full);
 

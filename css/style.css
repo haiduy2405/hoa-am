@@ -504,3 +504,18 @@ body.learn-open { overflow: hidden; }
 
 .update-dlg { max-width: 34rem; }
 .update-dlg::backdrop { background: rgba(8, 6, 13, 0.92); }
+
+/* ---------- Kho bài ---------- */
+dialog.kho { width: min(72rem, calc(100vw - 4rem)); max-height: min(88vh, 60rem); }
+.kho-bar { display: flex; align-items: center; gap: 1rem; margin: 0.5rem 0 0.9rem; }
+.kho-search { flex: 1; min-width: 0; padding: 0.75rem 1rem; font-size: 1.0625rem; border: 1px solid var(--line-2); border-radius: var(--r-md); background: var(--bg-2); }
+.kho-search:focus { outline: none; border-color: var(--brass); }
+.kho-chips { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.kho-list { display: grid; gap: 0.35rem; max-height: 46vh; overflow-y: auto; padding-right: 0.25rem; }
+.kho-item { display: grid; grid-template-columns: minmax(0, 1fr) 9rem 4rem; gap: 1rem; align-items: center; text-align: left; padding: 0.7rem 1rem; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel); }
+.kho-item:hover, .kho-item:focus-visible { border-color: var(--brass); background: var(--panel-2); }
+.kho-t { display: grid; min-width: 0; }
+.kho-t b { font-weight: 500; font-size: 1.0625rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kho-t i { font-style: normal; color: var(--ink-3); font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kho-c { color: var(--ink-3); font-size: 0.875rem; }
+.kho-d { color: var(--ink-3); font-size: 0.9375rem; text-align: right; font-feature-settings: 'tnum'; }

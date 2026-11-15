@@ -19,7 +19,7 @@ export function createStudio(env) {
   let fileName = '';
   const mix = { mute: new Set(), solo: new Set(), vol: new Map() };
   const els = {};
-  const learn = createLearn({ h, hub, toast: (m) => env.toast(m), noteLabel: (n) => env.noteLabel(n), openDevice: () => env.openDevice(), acceptCh: (c) => env.acceptCh(c), pickFile: () => pickFile() });
+  const learn = createLearn({ h, hub, toast: (m) => env.toast(m), noteLabel: (n) => env.noteLabel(n), openDevice: () => env.openDevice(), acceptCh: (c) => env.acceptCh(c), pickFile: () => pickFile(), openKho: () => env.openKho() });
 
   const player = new Player({
     hub,
@@ -122,7 +122,7 @@ export function createStudio(env) {
       h('div', { class: 'empty-main' },
         h('p', { class: 'studio-lead', text: 'Mở một bài MIDI, nghe qua đàn và học với nốt rơi.' }),
         h('p', { class: 'hint', text: 'Kéo thả file .mid vào bất kỳ đâu trên trang, hoặc chọn từ máy. Bài được phát qua cổng MIDI của đàn, nên hãy nối đàn trước. File không gửi đi đâu.' }),
-        h('div', { class: 'studio-empty-actions' }, btn('Mở file MIDI', pickFile, 'btn-primary big')),
+        h('div', { class: 'studio-empty-actions' }, btn('Chọn bài từ kho', () => env.openKho(), 'btn-primary big'), btn('Mở file MIDI', pickFile, 'btn-ghost big')),
         h('ol', { class: 'steps' },
           h('li', {}, h('b', { text: 'Nối đàn. ' }), 'Cắm cáp vào cổng USB TO HOST rồi bật đàn.'),
           h('li', {}, h('b', { text: 'Mở bài. ' }), 'Chọn file .mid, chỉnh âm sắc và âm lượng từng phần.'),
@@ -152,6 +152,7 @@ export function createStudio(env) {
         h('span', { text: `${song.parts.length} phần, ${song.parts.reduce((a, p) => a + p.notes.length, 0).toLocaleString('vi-VN')} nốt` })),
       h('div', { class: 'studio-head-actions' },
         els.out = h('button', { type: 'button', class: 'out-chip', onclick: () => env.openDevice() }),
+        btn('Kho bài', () => env.openKho(), 'btn-ghost'),
         btn('Mở file khác', pickFile, 'btn-ghost'),
         btn('Đóng bài', closeSong, 'btn-ghost', { title: 'Bài vẫn được lưu trong Bản nhạc của tôi' }),
         btn('Học bài này', openLearn, 'btn-primary', { id: 'btn-learn', title: 'Nốt rơi, đợi bạn chơi đúng từng tay' }),

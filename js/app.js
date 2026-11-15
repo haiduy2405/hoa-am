@@ -3,6 +3,7 @@ import { download, slug } from './export.js';
 import { createStudio } from './midiui.js';
 import { DEFAULTS, currentId, deleteSong, listSongs, loadSettings, loadSong, newId, saveSettings, saveSong, setCurrent } from './store.js';
 import { cleanTitle } from './title.js';
+import { parseMidi } from './songmidi.js';
 import { AUTHOR, NOTES, VERSION } from './version.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -189,10 +190,10 @@ function buildLibraryDialog() {
 }
 
 // ======================= Bài MIDI =======================
-function adoptMidi(song, name) {
+function adoptMidi(song, name, { id = null, exact = false } = {}) {
   saveNow(studio.getSong());
-  song.title = cleanTitle(name); // tên bài lấy từ tên file, không dùng tên track trong file (thường chỉ là "Piano")
-  curId = newId();
+  song.title = exact ? name : cleanTitle(name); // tên bài lấy từ tên file, không dùng tên track trong file (thường chỉ là "Piano")
+  curId = id || newId();
   studio.show(song, name);
   saveNow(song);
   toast('Đã mở file MIDI. Nối đàn rồi bấm Phát để nghe.');
@@ -206,10 +207,66 @@ function openSaved(id) {
   studio.show(song, song.title);
 }
 
+// ======================= Kho bài có sẵn =======================
+let catalog = null;
+const plain = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase();
+async function loadCatalog() {
+  if (catalog) return catalog;
+  const r = await fetch('songs/index.json', { cache: 'no-cache' });
+  if (!r.ok) throw new Error('Không tải được kho bài.');
+  catalog = (await r.json()).songs.map((s) => ({ ...s, key: plain(`${s.title} ${s.artist} ${s.cat}`) }));
+  catalog.sort((x, y) => x.title.localeCompare(y.title, 'vi'));
+  return catalog;
+}
+const fmtDur = (sec) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+async function openCatalogSong(entry) {
+  try {
+    const r = await fetch('songs/' + encodeURIComponent(entry.file), { cache: 'no-cache' });
+    if (!r.ok) throw new Error('Không tải được bài này.');
+    const song = parseMidi(new Uint8Array(await r.arrayBuffer()));
+    $('#dlg-kho').close();
+    adoptMidi(song, entry.title, { id: 'kho:' + entry.file, exact: true });
+  } catch (e) {
+    toast(e && e.message ? e.message : 'Không mở được bài này.');
+  }
+}
+async function buildKhoDialog() {
+  const dlg = $('#dlg-kho');
+  const body = $('#dlg-kho-body');
+  let list;
+  try { list = await loadCatalog(); } catch (e) { toast(e.message); return; }
+  const cats = ['Tất cả', ...new Set(list.map((s) => s.cat))];
+  let cat = 'Tất cả';
+  const search = h('input', { type: 'search', class: 'kho-search', placeholder: `Tìm trong ${list.length} bài (tên bài, ca sĩ)`, 'aria-label': 'Tìm bài', autocomplete: 'off' });
+  const chips = h('div', { class: 'kho-chips' });
+  const rows = h('div', { class: 'kho-list', role: 'list' });
+  const count = h('span', { class: 'hint' });
+  const shown = () => { const q = plain(search.value).trim().split(/\s+/).filter(Boolean); return list.filter((s) => (cat === 'Tất cả' || s.cat === cat) && q.every((w) => s.key.includes(w))); };
+  const paint = () => {
+    const items = shown();
+    count.textContent = `${items.length} bài`;
+    rows.replaceChildren(...(items.length ? items.map((s) => h('button', { type: 'button', class: 'kho-item', role: 'listitem', onclick: () => openCatalogSong(s) },
+      h('span', { class: 'kho-t' }, h('b', { text: s.title }), s.artist ? h('i', { text: s.artist }) : null),
+      h('span', { class: 'kho-c', text: s.cat }),
+      h('span', { class: 'kho-d', text: fmtDur(s.dur) }))) : [h('p', { class: 'hint', text: 'Không có bài nào khớp. Thử bỏ bớt từ khóa.' })]));
+    chips.replaceChildren(...cats.map((c) => h('button', { type: 'button', class: 'toggle', 'aria-pressed': String(c === cat), text: c, onclick: () => { cat = c; paint(); } })));
+  };
+  search.addEventListener('input', paint);
+  search.addEventListener('keydown', (e) => { if (e.key === 'Enter') { const f = shown()[0]; if (f) openCatalogSong(f); } });
+  body.replaceChildren(closeBtn(dlg), h('h3', { text: 'Kho bài' }),
+    h('p', { class: 'sub', text: 'Chọn một bài có sẵn, không cần mở file. Muốn dùng file của bạn thì bấm Mở file MIDI.' }),
+    h('div', { class: 'kho-bar' }, search, count), chips, rows,
+    h('div', { class: 'dlg-actions' }, h('button', { type: 'button', class: 'btn-ghost', text: 'Mở file MIDI từ máy', onclick: () => { dlg.close(); studio.pickFile(); } })));
+  paint();
+  if (!dlg.open) dlg.showModal();
+  search.focus();
+}
+
 studio = createStudio({
   root: $('#studio-root'), h, hub, toast,
   onSongChange: (song) => { if (song) save(song); else { clearTimeout(saveTimer); curId = null; setCurrent(null); studio && studio.refreshRecent(); } },
   openDevice: () => openDlg('#dlg-device', buildDeviceDialog),
+  openKho: () => buildKhoDialog(),
   adopt: adoptMidi,
   openSaved,
   recent: listSongs,
@@ -240,6 +297,7 @@ document.addEventListener('keydown', (e) => {
 hub.on('devices', renderDevice);
 $('#btn-device').addEventListener('click', () => openDlg('#dlg-device', buildDeviceDialog));
 $('#btn-settings').addEventListener('click', () => openDlg('#dlg-settings', buildSettingsDialog));
+$('#btn-kho').addEventListener('click', () => buildKhoDialog());
 $('#btn-library').addEventListener('click', () => openDlg('#dlg-library', buildLibraryDialog));
 $$('dialog').forEach((d) => d.addEventListener('click', (e) => { if (e.target === d) d.close(); }));
 window.addEventListener('beforeunload', () => saveNow(studio.getSong()));

@@ -1,7 +1,8 @@
 // Mỗi lần có thay đổi phải tăng VERSION (sửa nhỏ: số cuối, thêm tính năng: số giữa) và cập nhật NOTES.
-export const VERSION = '0.11.2';
+export const VERSION = '0.12.0';
 export const AUTHOR = 'duyluma';
 export const NOTES = [
+  'Kho bài có sẵn 63 bài từ thư mục MIDI của bạn: chọn là mở, có tìm kiếm và lọc theo loại; vẫn mở được file MIDI từ máy',
   'Mở file MIDI tự viết lại tên file thành tên bài rõ ràng, hiện ở Bài gần đây',
   'Bỏ tự động toàn màn hình khi bấm lần đầu',
   'Đổi tên thành Nốt Rơi; chỉ tối ưu cho máy tính, giao diện co giãn theo màn hình (chuẩn cho 2560x1440)',
