@@ -2,6 +2,7 @@ import { MidiHub } from './midi.js';
 import { download, slug } from './export.js';
 import { createStudio } from './midiui.js';
 import { DEFAULTS, currentId, deleteSong, listSongs, loadSettings, loadSong, newId, saveSettings, saveSong, setCurrent } from './store.js';
+import { createPianoDock } from './pianodock.js';
 import { starsOf, totalStars, streak, difficulty, DIFF_TEXT } from './progress.js';
 import { cleanTitle } from './title.js';
 import { parseMidi } from './songmidi.js';
@@ -285,6 +286,9 @@ studio = createStudio({
   download, slug,
 });
 
+// ======================= Đàn ở đáy màn hình =======================
+const dock = createPianoDock({ root: $('#piano-dock'), hub, h, noteLabel, acceptCh: (ch) => S.channels.includes(ch) });
+
 // ======================= Phím tắt =======================
 const isTyping = (t) => t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
 document.addEventListener('keydown', (e) => {
@@ -358,7 +362,7 @@ try { if (!localStorage.getItem('notroi.seen')) setTimeout(showGuide, 400); } ca
 hub.init().then(renderDevice);
 
 // Móc gỡ lỗi nhỏ: cho phép test tự động mà không cần đàn thật.
-window.__hoaam = { hub, studio, settings: S, adoptMidi };
+window.__hoaam = { dock, hub, studio, settings: S, adoptMidi };
 
 // ======================= Chạy như app =======================
 // Không bôi đen, không menu chuột phải (trừ trong ô nhập chữ), không kéo thả.

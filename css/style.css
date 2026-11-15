@@ -613,3 +613,18 @@ dialog.guide { width: min(46rem, calc(100vw - 4rem)); }
 .recent-item { border-width: 0.125rem; font-weight: 700; }
 .kho-grid { max-height: 44vh; }
 .pv-box { height: 13rem; }
+
+/* Đàn ở đáy màn hình */
+body { padding-bottom: 19rem; }
+.piano-dock { position: fixed; left: 0; right: 0; bottom: 0; height: 18.5rem; z-index: 5; display: grid; grid-template-rows: 8rem 1fr; background: linear-gradient(#2a2480, #3a2f9a); border-top: 0.25rem solid var(--brass); box-shadow: 0 -1rem 3rem rgba(0,0,0,0.35); }
+body.learn-open .piano-dock { display: none; }
+.pd-lane { position: relative; padding: 0.75rem 1.5rem; }
+.pd-read { display: inline-grid; grid-template-columns: auto 1fr; align-items: center; gap: 0.125rem 0.875rem; min-width: 22rem; padding: 0.625rem 1.25rem; border-radius: 1.25rem; background: rgba(255,255,255,0.12); border: 0.125rem solid rgba(255,255,255,0.25); }
+.pd-lbl { color: var(--ink-3); font-weight: 700; font-size: 0.9375rem; }
+.pd-chord { font: 800 2.5rem/1.1 var(--serif); color: var(--brass-2); min-height: 1.1em; }
+.pd-notes { font: 700 1.125rem/1.3 var(--sans); color: var(--ink); }
+.pd-board { position: relative; }
+.pd-keys { display: block; width: 100%; height: 100%; }
+.studio-view .pv-box, .pv-box { height: 11rem; }
+.pd-board { min-height: 0; overflow: hidden; }
+.pd-keys { position: absolute; inset: 0; }
