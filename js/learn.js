@@ -1,6 +1,7 @@
 // Chế độ học bài: nốt rơi xuống phím đàn, đợi bạn chơi đúng tay phải, tay trái rồi mới đi tiếp.
 // Phần còn lại của bài (tay kia, đệm, trống) do đàn tự chơi qua cổng MIDI out.
 import { barBeats, makeClock, songEnd } from './songmidi.js';
+import { record as recordProgress } from './progress.js';
 
 const BLACK = new Set([1, 3, 6, 8, 10]);
 const COL = { R: '#ffc93c', L: '#4cc9f0', B: '#c4b5fd' };
@@ -350,12 +351,15 @@ export function createLearn(env) {
       const prev = readBest();
       if (!prev || stats.score > prev.score) { record = true; writeBest({ score: stats.score, rank }); }
     }
+    const prog = recordProgress((song && song.title) || title, stars, game ? stats.score : 0);
     const cell = (label, val, cls = '') => h('div', { class: 'rc-cell ' + cls }, h('b', { text: String(val) }), h('span', { text: label }));
     const scoreEl = h('div', { class: 'rc-score', text: '0' });
     els.result.replaceChildren(h('div', { class: 'result-card', role: 'dialog', 'aria-label': 'Kết quả' },
       h('div', { class: 'rc-grade g-' + rank, text: rank }),
       h('div', { class: 'rc-stars', 'aria-label': stars + ' trên 3 sao' }, ...[0, 1, 2].map((i) => h('span', { class: i < stars ? 'on' : '', text: '★' }))),
       h('h3', { text: RANK_TEXT[rank] }),
+      prog.best && stars > 0 ? h('span', { class: 'rc-record', text: `Sao mới! Bài này được ${prog.stars} sao` }) : null,
+      prog.streak > 1 ? h('span', { class: 'rc-streak', text: `Luyện ${prog.streak} ngày liên tiếp` }) : null,
       game ? scoreEl : null,
       game && record ? h('span', { class: 'rc-record', text: 'Kỷ lục mới' }) : null,
       game ? h('div', { class: 'rc-grid' },
@@ -364,6 +368,7 @@ export function createLearn(env) {
         : h('div', { class: 'rc-grid' }, cell('Nhóm nốt đã qua', `${stats.hit}/${stats.groups}`), cell('Bấm sai', stats.wrong), cell('Chính xác', Math.round(acc * 100) + '%')),
       h('div', { class: 'rc-actions' },
         h('button', { type: 'button', class: 'btn-primary', text: 'Chơi lại', onclick: () => { els.result.hidden = true; seek(0); resetStats(); toggle(); } }),
+        h('button', { type: 'button', class: 'btn-ghost', text: 'Chọn bài khác', onclick: () => { els.result.hidden = true; if (running) toggle(); env.openKho(); } }),
         h('button', { type: 'button', class: 'btn-ghost', text: 'Đóng', onclick: () => { els.result.hidden = true; } }))));
     els.result.hidden = false;
     if (game) {
@@ -1077,6 +1082,8 @@ export function createLearn(env) {
   return {
     open: openSong, close, toggle,
     isOpen: () => open,
+    getOpt: (k) => set[k],
+    setOpt: (k, v) => { set[k] = v; if (k === 'hands') handDefaults(v, set.vol); save(); },
     isRunning: () => open && running,
     // dành cho kiểm thử
     debug: () => ({ pos, gi, groups: groups.length, waiting, stats: { ...stats }, mode: set.mode, hands: set.hands, notes: notes.length, running, need: groups[gi] ? [...groups[gi].pitches] : [], needMs: groups[gi] ? groups[gi].ms : null, roles: song ? song.parts.map((p) => [p.name, roles.get(p.id), p.channel]) : [], reqNotes: notes.filter((n) => n.req).length }),

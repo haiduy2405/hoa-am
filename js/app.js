@@ -2,6 +2,7 @@ import { MidiHub } from './midi.js';
 import { download, slug } from './export.js';
 import { createStudio } from './midiui.js';
 import { DEFAULTS, currentId, deleteSong, listSongs, loadSettings, loadSong, newId, saveSettings, saveSong, setCurrent } from './store.js';
+import { starsOf, totalStars, streak, difficulty, DIFF_TEXT } from './progress.js';
 import { cleanTitle } from './title.js';
 import { parseMidi } from './songmidi.js';
 import { AUTHOR, NOTES, VERSION } from './version.js';
@@ -236,27 +237,36 @@ async function buildKhoDialog() {
   let list;
   try { list = await loadCatalog(); } catch (e) { toast(e.message); return; }
   const cats = ['Tất cả', ...new Set(list.map((s) => s.cat))];
-  let cat = 'Tất cả';
-  const search = h('input', { type: 'search', class: 'kho-search', placeholder: `Tìm trong ${list.length} bài (tên bài, ca sĩ)`, 'aria-label': 'Tìm bài', autocomplete: 'off' });
+  let cat = 'Tất cả', diff = 'all';
+  const search = h('input', { type: 'search', class: 'kho-search', placeholder: `Tìm trong ${list.length} bài`, 'aria-label': 'Tìm bài', autocomplete: 'off' });
   const chips = h('div', { class: 'kho-chips' });
-  const rows = h('div', { class: 'kho-list', role: 'list' });
+  const rows = h('div', { class: 'kho-grid', role: 'list' });
   const count = h('span', { class: 'hint' });
-  const shown = () => { const q = plain(search.value).trim().split(/\s+/).filter(Boolean); return list.filter((s) => (cat === 'Tất cả' || s.cat === cat) && q.every((w) => s.key.includes(w))); };
+  const hue = (t) => { let x = 0; for (const c of t) x = (x * 31 + c.charCodeAt(0)) % 360; return x; };
+  const shown = () => { const q = plain(search.value).trim().split(/\s+/).filter(Boolean); return list.filter((s) => (cat === 'Tất cả' || s.cat === cat) && (diff === 'all' || difficulty(s) === diff) && q.every((w) => s.key.includes(w))); };
   const paint = () => {
     const items = shown();
     count.textContent = `${items.length} bài`;
-    rows.replaceChildren(...(items.length ? items.map((s) => h('button', { type: 'button', class: 'kho-item', role: 'listitem', onclick: () => openCatalogSong(s) },
-      h('span', { class: 'kho-t' }, h('b', { text: s.title }), s.artist ? h('i', { text: s.artist }) : null),
-      h('span', { class: 'kho-c', text: s.cat }),
-      h('span', { class: 'kho-d', text: fmtDur(s.dur) }))) : [h('p', { class: 'hint', text: 'Không có bài nào khớp. Thử bỏ bớt từ khóa.' })]));
-    chips.replaceChildren(...cats.map((c) => h('button', { type: 'button', class: 'toggle', 'aria-pressed': String(c === cat), text: c, onclick: () => { cat = c; paint(); } })));
+    rows.replaceChildren(...(items.length ? items.map((s) => {
+      const st = starsOf(s.title), d = difficulty(s);
+      return h('button', { type: 'button', class: 'kho-card', role: 'listitem', style: `--hue:${hue(s.title)}`, onclick: () => openCatalogSong(s) },
+        h('span', { class: 'kc-top' }, h('span', { class: 'kc-diff d-' + d, text: DIFF_TEXT[d] }), h('span', { class: 'kc-dur', text: fmtDur(s.dur) })),
+        h('b', { class: 'kc-title', text: s.title }),
+        h('span', { class: 'kc-artist', text: s.artist || s.cat }),
+        h('span', { class: 'kc-stars', 'aria-label': st + ' trên 3 sao' }, ...[0, 1, 2].map((i) => h('i', { class: i < st ? 'on' : '', text: '★' }))));
+    }) : [h('p', { class: 'hint', text: 'Không có bài nào khớp. Thử bỏ bớt từ khóa.' })]));
+    const chip = (text, on, fn) => h('button', { type: 'button', class: 'toggle', 'aria-pressed': String(on), text, onclick: fn });
+    chips.replaceChildren(
+      ...[['all', 'Mọi độ khó'], ['easy', 'Dễ'], ['mid', 'Vừa'], ['hard', 'Khó']].map(([k, t]) => chip(t, k === diff, () => { diff = k; paint(); })),
+      h('span', { class: 'kho-sep' }),
+      ...cats.map((c) => chip(c, c === cat, () => { cat = c; paint(); })));
   };
   search.addEventListener('input', paint);
   search.addEventListener('keydown', (e) => { if (e.key === 'Enter') { const f = shown()[0]; if (f) openCatalogSong(f); } });
   body.replaceChildren(closeBtn(dlg), h('h3', { text: 'Kho bài' }),
-    h('p', { class: 'sub', text: 'Chọn một bài có sẵn, không cần mở file. Muốn dùng file của bạn thì bấm Mở file MIDI.' }),
+    h('p', { class: 'sub', text: `Chọn một bài để chơi. Bạn đã có ${totalStars()} sao${streak() > 1 ? `, luyện ${streak()} ngày liên tiếp` : ''}!` }),
     h('div', { class: 'kho-bar' }, search, count), chips, rows,
-    h('div', { class: 'dlg-actions' }, h('button', { type: 'button', class: 'btn-ghost', text: 'Mở file MIDI từ máy', onclick: () => { dlg.close(); studio.pickFile(); } })));
+    h('div', { class: 'dlg-actions' }, h('button', { type: 'button', class: 'btn-ghost', text: 'Nhập File .mid từ máy', onclick: () => { dlg.close(); studio.pickFile(); } })));
   paint();
   if (!dlg.open) dlg.showModal();
   search.focus();
@@ -319,6 +329,25 @@ $('#foot-author').textContent = AUTHOR;
     f ? studio.openFile(f) : toast('Chỉ mở được file .mid hoặc .midi.');
   });
 }
+
+// ======================= Hướng dẫn lần đầu + dọn bản lưu cũ =======================
+for (const it of listSongs()) if (/^(piano|bài chưa đặt tên|untitled)$/i.test((it.title || '').trim())) deleteSong(it.id); // bản lưu cũ bị đặt tên theo track
+function showGuide() {
+  const dlg = h('dialog', { class: 'guide' });
+  const steps = [
+    ['Nối đàn', 'Cắm cáp USB vào cổng USB TO HOST của đàn rồi bật đàn. Trình duyệt hỏi quyền MIDI thì bấm Cho phép.'],
+    ['Chọn bài', 'Bấm Chọn bài từ kho. Bài có chấm Dễ là hợp để bắt đầu.'],
+    ['Đặt tay', 'Ngồi thẳng, đặt ngón cái tay phải lên nốt Đô giữa. Nốt vàng dành cho tay phải, nốt xanh dành cho tay trái.'],
+    ['Vào chơi', 'Bấm VÀO CHƠI. Nốt rơi xuống phím nào thì bấm phím đó. Chơi đúng được sao!'],
+  ];
+  dlg.append(h('div', { class: 'dlg' }, h('h3', { text: 'Chào mừng đến Nốt Rơi!' }), h('p', { class: 'sub', text: 'Học đàn vui hơn chỉ với 4 bước:' }),
+    h('ol', { class: 'guide-steps' }, ...steps.map(([t, d]) => h('li', {}, h('b', { text: t }), h('span', { text: d })))),
+    h('div', { class: 'dlg-actions' }, h('button', { type: 'button', class: 'btn-primary big', text: 'Bắt đầu thôi!', onclick: () => dlg.close() }))));
+  dlg.addEventListener('close', () => { try { localStorage.setItem('notroi.seen', '1'); } catch (e) { /* bỏ qua */ } dlg.remove(); });
+  document.body.append(dlg);
+  dlg.showModal();
+}
+try { if (!localStorage.getItem('notroi.seen')) setTimeout(showGuide, 400); } catch (e) { /* bỏ qua */ }
 
 // ======================= Khởi động =======================
 {

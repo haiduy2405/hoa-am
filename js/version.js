@@ -1,7 +1,8 @@
 // Mỗi lần có thay đổi phải tăng VERSION (sửa nhỏ: số cuối, thêm tính năng: số giữa) và cập nhật NOTES.
-export const VERSION = '0.14.0';
+export const VERSION = '0.15.0';
 export const AUTHOR = 'duyluma';
 export const NOTES = [
+  'Kho bài dạng thẻ màu có độ khó và sao; chọn cách chơi, tay tập, tốc độ ngay ở màn hình bài; kết quả có sao và chuỗi ngày luyện; hướng dẫn 4 bước lần đầu; dọn bản lưu tên Piano cũ',
   'Giao diện thân thiện với trẻ em: màu sáng hơn, font tròn Nunito và Baloo 2 (tự host, chạy offline), nút bo tròn to, màn hình chính gọn hơn',
   'Bỏ nút Kho bài và Bản nhạc của tôi ở thanh trên (Kho bài vẫn có ở màn hình chính). Sửa mô tả app (bỏ "dò hợp âm"). Màn hình bài: nút Kho bài / Nhập File .mid / Đóng bài và VÀO CHƠI to ở dưới, player lớn hơn, thêm sơ đồ nốt rơi của cả bài',
   'Sửa nút Cập nhật: đợi máy chủ đổi xong bản mới rồi mới tải lại, tránh bị kẹt bản cũ',

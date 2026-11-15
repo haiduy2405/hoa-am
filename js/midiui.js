@@ -132,9 +132,10 @@ export function createStudio(env) {
     els.bar = h('div', { class: 'studio-bar', role: 'toolbar', 'aria-label': 'Điều khiển phát' });
     els.parts = h('div', { class: 'studio-parts', role: 'list', 'aria-label': 'Các phần nhạc cụ' });
     els.preview = h('div', { class: 'preview' });
+    els.opts = h('div', { class: 'opts' });
     els.dock = h('div', { class: 'dock' });
     els.mixer = h('details', { class: 'mixer' }, h('summary', { text: 'Chỉnh từng phần và xuất file .mid' }), h('div', { class: 'mixer-tools' }, btn('Xuất file .mid', () => exportMid(), 'btn-ghost')), els.parts);
-    els.view.append(els.head, els.bar, els.preview, els.dock, els.mixer);
+    els.view.append(els.head, els.bar, els.preview, els.opts, els.dock, els.mixer);
     root.append(els.empty, els.view);
   }
 
@@ -154,6 +155,16 @@ export function createStudio(env) {
       h('div', { class: 'studio-head-actions' },
         els.out = h('button', { type: 'button', class: 'out-chip', onclick: () => env.openDevice() })));
     renderOut();
+  }
+
+  function renderOpts() {
+    if (!els.opts) return;
+    const group = (label, key, choices) => h('div', { class: 'opt-group' }, h('span', { class: 'opt-lbl', text: label }),
+      h('div', { class: 'opt-btns' }, ...choices.map(([v, t]) => h('button', { type: 'button', class: 'opt-btn', 'aria-pressed': String(learn.getOpt(key) === v), text: t, onclick: () => { learn.setOpt(key, v); renderOpts(); } }))));
+    els.opts.replaceChildren(
+      group('Cách chơi', 'mode', [['wait', 'Đợi tôi'], ['rhythm', 'Theo nhịp'], ['watch', 'Xem trước']]),
+      group('Tay tập', 'hands', [['R', 'Tay phải'], ['L', 'Tay trái'], ['RL', 'Hai tay']]),
+      group('Tốc độ', 'speed', [[0.5, 'Chậm'], [0.8, 'Vừa'], [1, 'Chuẩn']]));
   }
 
   function renderDock() {
@@ -281,7 +292,7 @@ export function createStudio(env) {
     els.empty.hidden = !!song;
     els.view.hidden = !song;
     if (!song) { stopPlay(); renderRecent(); return; }
-    renderHead(); renderBar(); renderPreview(); renderDock(); renderParts();
+    renderHead(); renderBar(); renderPreview(); renderOpts(); renderDock(); renderParts();
   }
 
   function renderOut() {
