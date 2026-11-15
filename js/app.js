@@ -390,10 +390,10 @@ function askDialog({ title, text, steps, ok, onOk, cancel = 'Hủy' }) {
   dlg.showModal();
 }
 async function onInstallClick() {
-  if (isInstalled()) { toast('Bạn đang dùng app đã cài rồi.'); return; }
+  if (isInstalled()) { toast('Bạn đang dùng app từ lối tắt rồi.'); return; }
   if (installEvt) {
     askDialog({
-      title: 'Cài Nốt Rơi ra màn hình?', text: 'Nốt Rơi sẽ có shortcut ngoài desktop, mở toàn màn hình như một app. Sau khi bấm Cài, Chrome sẽ hỏi xác nhận một lần nữa.', ok: 'Cài', cancel: 'Hủy',
+      title: 'Tạo lối tắt Nốt Rơi ngoài màn hình?', text: 'Nốt Rơi sẽ có lối tắt ngoài desktop, mở toàn màn hình như một app. Sau khi bấm Tạo, Chrome sẽ hỏi xác nhận một lần nữa.', ok: 'Tạo lối tắt', cancel: 'Hủy',
       onOk: async () => { const e = installEvt; installEvt = null; e.prompt(); await e.userChoice.catch(() => {}); },
     });
     return;
@@ -402,17 +402,23 @@ async function onInstallClick() {
   try { already = !!(navigator.getInstalledRelatedApps && (await navigator.getInstalledRelatedApps()).length); } catch (e) { /* bỏ qua */ }
   if (already) {
     askDialog({
-      title: 'Nốt Rơi đã có trên máy này', text: 'Chrome đã cài sẵn app, nên không cho cài thêm. Mở shortcut Nốt Rơi ngoài desktop để dùng. Muốn cài lại cho đúng tên và biểu tượng mới:',
-      steps: [['Gỡ bản cũ', 'Mở app, bấm menu ⋮ ở góc cửa sổ, chọn Gỡ cài đặt Nốt Rơi.'], ['Cài lại', 'Mở web này trong tab Chrome thường rồi bấm Cài ra màn hình.']], cancel: 'Đã hiểu',
+      title: 'Bạn đã tạo lối tắt rồi', text: 'Nốt Rơi đã có trên máy này, mở lối tắt ngoài desktop để dùng. Muốn tạo lại cho đúng tên và biểu tượng mới:',
+      steps: [['Gỡ bản cũ', 'Mở app, bấm menu ⋮ ở góc cửa sổ, chọn Gỡ cài đặt Nốt Rơi.'], ['Tạo lại', 'Mở web này trong tab Chrome thường rồi bấm Tạo lối tắt.']], cancel: 'Đã hiểu',
     });
     return;
   }
   askDialog({
-    title: 'Chrome chưa cho cài lúc này', text: 'Đợi vài giây rồi bấm lại. Nếu vẫn thế, mở web trong tab Chrome thường (không mở từ shortcut) rồi bấm biểu tượng cài đặt bên phải thanh địa chỉ, hoặc menu ⋮ → Truyền, lưu và chia sẻ → Cài đặt Nốt Rơi.', cancel: 'Đã hiểu',
+    title: 'Chrome chưa cho tạo lối tắt lúc này', text: 'Đợi vài giây rồi bấm lại. Nếu vẫn thế, mở web trong tab Chrome thường (không mở từ shortcut) rồi bấm biểu tượng cài đặt bên phải thanh địa chỉ, hoặc menu ⋮ → Truyền, lưu và chia sẻ → Cài đặt Nốt Rơi.', cancel: 'Đã hiểu',
   });
 }
 installBtn.addEventListener('click', onInstallClick);
-window.addEventListener('appinstalled', () => { toast('Đã cài Nốt Rơi ra màn hình.'); });
+const markDone = (on = true) => installBtn.classList.toggle('done', on);
+window.addEventListener('appinstalled', () => { markDone(); toast('Đã tạo lối tắt Nốt Rơi ngoài màn hình.'); });
+// Đã tạo lối tắt rồi (đang chạy từ lối tắt, hoặc Chrome báo app đã cài): làm tối nút.
+(async () => {
+  if (isInstalled()) { markDone(); return; }
+  try { if (navigator.getInstalledRelatedApps && (await navigator.getInstalledRelatedApps()).length) markDone(); } catch (e) { /* bỏ qua */ }
+})();
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
 
 // ======================= Bản mới: bắt buộc cập nhật =======================

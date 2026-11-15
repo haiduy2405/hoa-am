@@ -647,3 +647,5 @@ dialog.guide.small { width: min(34rem, calc(100vw - 4rem)); }
 .brand-meta { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; font-weight: 600; color: var(--ink-3); white-space: nowrap; }
 .brand-meta b { color: var(--brass-2); font-weight: 800; }
 .brand-meta i { width: 0.1875rem; height: 0.1875rem; border-radius: 50%; background: var(--ink-3); }
+
+.btn-install.done { opacity: 0.4; filter: grayscale(0.7); box-shadow: none; }
