@@ -1,7 +1,8 @@
 // Mỗi lần có thay đổi phải tăng VERSION (sửa nhỏ: số cuối, thêm tính năng: số giữa) và cập nhật NOTES.
-export const VERSION = '0.17.4';
+export const VERSION = '0.17.5';
 export const AUTHOR = 'duyluma';
 export const NOTES = [
+  'Thiết kế lại góc thương hiệu: logo ô vuông bo tròn, nhãn phiên bản, dòng Made by duyluma và năm',
   'Nút đổi tên thành Tạo lối tắt, tự tối đi khi đã có lối tắt',
   'Phiên bản, Made by duyluma và năm hiện tại hiện ngay dưới tên app ở góc trên trái',
   'Nút Cài ra màn hình: hộp hỏi Cài / Hủy trước, báo rõ khi app đã cài sẵn; chỉnh manifest (id, màu)',

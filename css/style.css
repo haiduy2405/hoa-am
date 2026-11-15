@@ -649,3 +649,15 @@ dialog.guide.small { width: min(34rem, calc(100vw - 4rem)); }
 .brand-meta i { width: 0.1875rem; height: 0.1875rem; border-radius: 50%; background: var(--ink-3); }
 
 .btn-install.done { opacity: 0.4; filter: grayscale(0.7); box-shadow: none; }
+
+/* Thương hiệu: logo ô vuông bo tròn, tên, nhãn phiên bản, dòng tác giả */
+.brand { gap: 0.875rem; }
+.logo { display: grid; place-items: center; width: 3.5rem; height: 3.5rem; border-radius: 1.125rem; background: linear-gradient(145deg, #ffdf7e, #ff9a3c); box-shadow: 0 0.25rem 0 #c9701c, 0 0.5rem 1rem rgba(0,0,0,0.3); transform: rotate(-4deg); }
+.logo svg { width: 2.25rem; height: 2.25rem; }
+.brand-text { display: grid; gap: 0.25rem; line-height: 1; }
+.brand-row { display: flex; align-items: center; gap: 0.625rem; }
+.brand-name { font: 800 2.125rem/1 var(--serif); letter-spacing: 0; color: #fff; }
+.ver-pill { padding: 0.1875rem 0.75rem; border-radius: 62.4375rem; background: rgba(255,255,255,0.16); border: 0.0625rem solid rgba(255,255,255,0.28); color: var(--brass-2); font: 800 0.8125rem/1.2 var(--sans); letter-spacing: 0.02em; }
+.brand-credit { display: flex; align-items: center; gap: 0.5rem; font: 600 0.875rem/1.2 var(--sans); color: var(--ink-3); white-space: nowrap; }
+.brand-credit b { color: var(--brass-2); font-weight: 800; }
+.brand-credit .sep { width: 0.25rem; height: 0.25rem; border-radius: 50%; background: var(--ink-3); }
