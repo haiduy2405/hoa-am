@@ -751,3 +751,9 @@ dialog.mixer-dlg { width: min(80rem, calc(100vw - 4rem)); }
 .dock-btn.dk-cancel { background: rgba(255,90,100,0.16); border-color: #ff6b75; color: #ffd0d3; }
 .dock-btn.dk-cancel b::before { content: '✕'; display: inline-grid; place-items: center; width: 1.5em; height: 1.5em; margin-right: 0.5rem; border-radius: 50%; background: #ff4757; color: #fff; font-size: 0.8em; line-height: 1; vertical-align: 0.05em; }
 .dock-btn.dk-cancel:hover { background: rgba(255,90,100,0.3); border-color: #ff8a92; }
+
+.dock-btn.dk-kho { background: linear-gradient(180deg, rgba(76,201,240,0.28), rgba(76,201,240,0.14)); border-color: #4cc9f0; color: #e2f7ff; }
+.dock-btn.dk-kho b { display: inline-flex; align-items: center; justify-content: center; gap: 0.625rem; }
+.dock-btn.dk-kho .dk-ic { display: inline-grid; place-items: center; width: 1.875rem; height: 1.875rem; border-radius: 50%; background: #4cc9f0; color: #0d2a4a; }
+.dock-btn.dk-kho small { color: #b8e8f8; }
+.dock-btn.dk-kho:hover { background: linear-gradient(180deg, rgba(76,201,240,0.4), rgba(76,201,240,0.22)); border-color: #8be0fa; }
