@@ -187,7 +187,20 @@ export function createStudio(env) {
     if (!song || !els.preview) return;
     const cv = h('canvas', { class: 'pv-cv', 'aria-label': 'Sơ đồ nốt rơi của cả bài' });
     els.pline = h('i', { class: 'pv-line' });
-    els.preview.replaceChildren(h('div', { class: 'pv-head' }, h('b', { text: 'Sơ đồ bài hát' }), h('span', { text: 'Nốt rơi từ trên xuống, đầu bài ở dưới cùng' })), h('div', { class: 'pv-box' }, cv, els.pline));
+    els.preview.replaceChildren(h('div', { class: 'pv-head' }, h('b', { text: 'Sơ đồ bài hát' })), h('div', { class: 'pv-box' }, cv, els.pline));
+    // Bấm giữ rồi kéo lên/xuống như timeline: đáy = đầu bài, đỉnh = cuối bài.
+    const box0 = cv.parentElement;
+    const scrub = (e) => {
+      const r = box0.getBoundingClientRect();
+      const f = Math.min(1, Math.max(0, 1 - (e.clientY - r.top) / r.height));
+      cursor = Math.round(f * endTick());
+      if (player.active) player.setFrom(cursor);
+      updateProgress(cursor);
+    };
+    box0.addEventListener('pointerdown', (e) => { box0.setPointerCapture(e.pointerId); box0.classList.add('drag'); scrub(e); });
+    box0.addEventListener('pointermove', (e) => { if (box0.hasPointerCapture(e.pointerId)) scrub(e); });
+    const up = (e) => { box0.classList.remove('drag'); if (box0.hasPointerCapture(e.pointerId)) box0.releasePointerCapture(e.pointerId); };
+    box0.addEventListener('pointerup', up); box0.addEventListener('pointercancel', up);
     const draw = () => {
       const box = cv.parentElement; if (!box || !box.clientWidth) return;
       const dpr = window.devicePixelRatio || 1;
