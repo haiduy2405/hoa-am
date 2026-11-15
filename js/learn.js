@@ -3,14 +3,14 @@
 import { barBeats, makeClock, songEnd } from './songmidi.js';
 
 const BLACK = new Set([1, 3, 6, 8, 10]);
-const COL = { R: '#e3b35c', L: '#6fc9b3', B: '#9a90b5' };
+const COL = { R: '#ffc93c', L: '#4cc9f0', B: '#c4b5fd' };
 const BAD = '#ee6c60';
 const LEAD = 1200; // ms dẫn vào trước nốt đầu để kịp nhìn nốt rơi
 const EARLY = 320; // chế độ đợi: bấm sớm tối đa bấy nhiêu ms (theo thời gian bài) vẫn tính đúng
 const GAP = 40; // nốt cách nhau dưới ngần này ms được xem là một hợp âm
 const STORE = 'hoaam.learn';
 const BEST = 'hoaam.learn.best';
-const LIGHT = { R: '#f6dca0', L: '#a6e6d6', B: '#c4bcd8' };
+const LIGHT = { R: '#ffe9a6', L: '#b4ecff', B: '#e4dcff' };
 const WIN = { perfect: 70, great: 130, good: 220 }; // cửa sổ chấm theo ms thực
 const GRADES = {
   perfect: { t: 'PERFECT', col: '#f3cf88', pts: 300, acc: 1, gauge: 5 },
@@ -26,7 +26,7 @@ const rankOf = (acc) => (acc >= 0.93 ? 'S' : acc >= 0.82 ? 'A' : acc >= 0.66 ? '
 const RANK_TEXT = { S: 'Xuất sắc!', A: 'Rất tốt!', B: 'Khá tốt', C: 'Cố thêm chút nữa', D: 'Luyện thêm nhé' };
 const SERIF = '"Newsreader", Georgia, serif';
 const SANS = '"Be Vietnam Pro", system-ui, sans-serif';
-const DISPLAY = '"Barlow Condensed", "Be Vietnam Pro", system-ui, sans-serif';
+const DISPLAY = '"Baloo 2", "Nunito", system-ui, sans-serif';
 const PCT = Array.from({ length: 10 }, (_, i) => [(i + 1) / 10, `${(i + 1) * 10}%`]);
 
 const ROLES = [
@@ -545,7 +545,7 @@ export function createLearn(env) {
         const a = t > 0.78 ? Math.max(0, 1 - (t - 0.78) / 0.22) : 1;
         g.save(); g.translate(cw / 2, cy); g.scale(sc, sc); g.globalAlpha = a;
         g.fillStyle = '#fff7e0'; g.shadowColor = '#e3b35c'; g.shadowBlur = 46; g.textBaseline = 'middle';
-        g.font = `italic 800 ${size}px ${DISPLAY}`; g.fillText(String(n), 0, size * 0.04); g.restore();
+        g.font = `800 ${size}px ${DISPLAY}`; g.fillText(String(n), 0, size * 0.04); g.restore();
         g.globalAlpha = 1;
       }
     }
@@ -554,7 +554,7 @@ export function createLearn(env) {
       const size = Math.round(Math.min(170, Math.max(80, chh * 0.24)));
       g.save(); g.translate(cw / 2, hitY * 0.5); g.scale(1 + 0.5 * (1 - ease(age / 160)), 1 + 0.5 * (1 - ease(age / 160))); g.globalAlpha = a;
       g.fillStyle = '#d9fff3'; g.shadowColor = '#6fc9b3'; g.shadowBlur = 40; g.textBaseline = 'middle';
-      g.font = `italic 800 ${size}px ${DISPLAY}`; g.fillText('BẮT ĐẦU!', 0, 0); g.restore();
+      g.font = `800 ${size}px ${DISPLAY}`; g.fillText('BẮT ĐẦU!', 0, 0); g.restore();
     }
     // số chuỗi (combo)
     if (stats.combo >= 3 && set.mode !== 'watch') {
@@ -563,7 +563,7 @@ export function createLearn(env) {
       g.textBaseline = 'alphabetic';
       g.fillStyle = 'rgba(244,239,231,0.55)'; g.font = `600 12px ${SANS}`;
       g.fillText(game && stats.fever ? 'FEVER' : set.mode === 'wait' ? 'CHUỖI' : 'COMBO', 0, -66);
-      g.font = `italic 800 84px ${DISPLAY}`; g.fillStyle = game && stats.fever ? '#ffc6ea' : '#f4efe7';
+      g.font = `800 84px ${DISPLAY}`; g.fillStyle = game && stats.fever ? '#ffc6ea' : '#f4efe7';
       g.shadowColor = game && stats.fever ? '#f078c8' : '#e3b35c'; g.shadowBlur = 22;
       g.fillText(String(stats.combo), 0, 14); g.restore();
     }
@@ -578,7 +578,7 @@ export function createLearn(env) {
         const sc = perfect ? 1 + 0.7 * (1 - ease(age / 150)) + 0.04 * Math.sin(age / 90) * (1 - age / life) : 1 + 0.45 * (1 - ease(age / 130));
         const cy = hitY * 0.54;
         g.save(); g.translate(cw / 2, cy);
-        g.font = `italic 800 ${fs}px ${DISPLAY}`; g.textBaseline = 'middle';
+        g.font = `800 ${fs}px ${DISPLAY}`; g.textBaseline = 'middle';
         try { g.letterSpacing = perfect ? '3px' : '0px'; } catch (e) { /* bỏ qua */ }
         if (perfect && fxOn()) {
           // tia sáng xoay chậm phía sau chữ
@@ -626,12 +626,12 @@ export function createLearn(env) {
           g.save(); g.translate(0, fs * 0.86); g.scale(1 + 0.8 * (1 - k) + Math.min(6, m - 2) * 0.1, 1 + 0.8 * (1 - k) + Math.min(6, m - 2) * 0.1);
           g.fillStyle = col; g.shadowColor = col; g.shadowBlur = 20 + Math.min(8, m) * 6;
           g.lineWidth = 3; g.strokeStyle = 'rgba(60,20,10,0.55)'; g.lineJoin = 'round';
-          g.font = `italic 800 ${Math.round(fs * 0.7)}px ${DISPLAY}`;
+          g.font = `800 ${Math.round(fs * 0.7)}px ${DISPLAY}`;
           g.strokeText('×' + m, 0, 0); g.fillText('×' + m, 0, 0);
           g.restore();
         }
         g.shadowBlur = 0;
-        if (fx.pop.sub) { g.font = `italic 600 ${Math.round(fs * 0.3)}px ${DISPLAY}`; g.globalAlpha = a * 0.8; g.fillStyle = fx.pop.col; g.fillText(fx.pop.sub.toUpperCase(), 0, fs * 0.66); }
+        if (fx.pop.sub) { g.font = `600 ${Math.round(fs * 0.3)}px ${DISPLAY}`; g.globalAlpha = a * 0.8; g.fillStyle = fx.pop.col; g.fillText(fx.pop.sub.toUpperCase(), 0, fs * 0.66); }
         g.restore();
         // sao lấp lánh quanh chữ PERFECT
         if (perfect && fxOn()) {
@@ -657,7 +657,7 @@ export function createLearn(env) {
         const sc = 1.35 - 0.35 * ease(age / 180);
         g.save(); g.translate(cw / 2, hitY * 0.68); g.scale(sc, sc); g.globalAlpha = a;
         g.fillStyle = fx.banner.col; g.shadowColor = fx.banner.col; g.shadowBlur = 28; g.textBaseline = 'middle';
-        g.font = `italic 800 60px ${DISPLAY}`; g.fillText(fx.banner.text, 0, 0); g.restore();
+        g.font = `800 60px ${DISPLAY}`; g.fillText(fx.banner.text, 0, 0); g.restore();
       }
     }
     g.textAlign = 'start'; g.globalAlpha = 1;
@@ -674,7 +674,7 @@ export function createLearn(env) {
 
     // nền và vạch quãng tám
     const bg = g.createLinearGradient(0, 0, 0, hitY);
-    bg.addColorStop(0, '#0f0c1a'); bg.addColorStop(1, '#1a1430');
+    bg.addColorStop(0, '#1b1a4a'); bg.addColorStop(1, '#3a2f9a');
     g.fillStyle = bg; g.fillRect(0, 0, cw, chh);
     { // làn xen kẽ rất nhạt cho dễ canh phím
       let wi = 0;

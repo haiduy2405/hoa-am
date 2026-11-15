@@ -122,13 +122,9 @@ export function createStudio(env) {
     root.replaceChildren();
     els.empty = h('div', { class: 'studio-empty' },
       h('div', { class: 'empty-main' },
-        h('p', { class: 'studio-lead', text: 'Mở một bài MIDI, nghe qua đàn và học với nốt rơi.' }),
-        h('p', { class: 'hint', text: 'Kéo thả file .mid vào bất kỳ đâu trên trang, hoặc chọn từ máy. Bài được phát qua cổng MIDI của đàn, nên hãy nối đàn trước. File không gửi đi đâu.' }),
-        h('div', { class: 'studio-empty-actions' }, btn('Chọn bài từ kho', () => env.openKho(), 'btn-primary big'), btn('Mở file MIDI', pickFile, 'btn-ghost big')),
-        h('ol', { class: 'steps' },
-          h('li', {}, h('b', { text: 'Nối đàn. ' }), 'Cắm cáp vào cổng USB TO HOST rồi bật đàn.'),
-          h('li', {}, h('b', { text: 'Mở bài. ' }), 'Chọn file .mid, chỉnh âm sắc và âm lượng từng phần.'),
-          h('li', {}, h('b', { text: 'Học bài. ' }), 'Nốt rơi xuống phím đàn, chơi đúng nhịp để ghi điểm.'))),
+        h('p', { class: 'studio-lead', text: 'Chọn một bài để chơi nào!' }),
+        h('p', { class: 'hint', text: 'Nối đàn bằng cáp USB (cổng USB TO HOST), bật đàn rồi chọn bài. Bạn cũng có thể kéo file .mid thả vào đây.' }),
+        h('div', { class: 'studio-empty-actions' }, btn('Chọn bài từ kho', () => env.openKho(), 'btn-primary big'), btn('Nhập File .mid', pickFile, 'btn-ghost big'))),
       els.recent = h('div', { class: 'recent' }));
 
     els.view = h('div', { class: 'studio-view', hidden: true });
