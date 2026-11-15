@@ -1,9 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="7" fill="#16111e"/>
-  <g transform="translate(4 4)" fill="none" stroke="#d9a441" stroke-width="1.6">
-    <rect x="1" y="1.5" width="22" height="21" rx="4"/>
-    <path d="M8.4 1.5v21M15.6 1.5v21"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6a52e8"/><stop offset="1" stop-color="#1f1a5e"/></linearGradient>
+<linearGradient id="ny" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd84d" stop-opacity="0.25"/><stop offset="1" stop-color="#ffd84d"/></linearGradient>
+<linearGradient id="nc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4cc9f0" stop-opacity="0.25"/><stop offset="1" stop-color="#4cc9f0"/></linearGradient>
+<linearGradient id="np" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7eb6" stop-opacity="0.25"/><stop offset="1" stop-color="#ff7eb6"/></linearGradient>
+<filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  <g filter="url(#glow)">
+    <rect x="85" y="132" width="48" height="130" rx="14" fill="url(#ny)"/>
+    <rect x="232" y="56" width="48" height="114" rx="14" fill="url(#nc)"/>
+    <rect x="379" y="98" width="48" height="118" rx="14" fill="url(#np)"/>
   </g>
-  <rect x="9.3" y="5.5" width="5" height="11.5" rx="1.2" fill="#d9a441"/>
-  <rect x="16.7" y="5.5" width="5" height="11.5" rx="1.2" fill="#d9a441"/>
+  <rect x="72" y="286" width="368" height="158" rx="28" fill="#fff"/>
+  <rect x="72" y="286" width="73.6" height="158" rx="26" fill="#ffe27a"/>
+  <rect x="100" y="286" width="45.6" height="158" fill="#ffe27a"/>
+  <g stroke="#d9d4f5" stroke-width="4"><path d="M145.6 330V444M219.2 330V444M292.8 330V444M366.4 330V444"/></g>
+  <g fill="#2a2370"><rect x="123.6" y="286" width="44" height="96" rx="10"/><rect x="197.2" y="286" width="44" height="96" rx="10"/><rect x="344.4" y="286" width="44" height="96" rx="10"/></g>
+  <rect x="72" y="428" width="368" height="16" rx="8" fill="#000" opacity="0.08"/>
 </svg>

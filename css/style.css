@@ -733,3 +733,7 @@ dialog.mixer-dlg { width: min(80rem, calc(100vw - 4rem)); }
 .ri-stars { display: flex; gap: 0.0625rem; font-size: 1.125rem; flex-shrink: 0; }
 .ri-stars i { font-style: normal; color: rgba(255,255,255,0.22); }
 .ri-stars i.on { color: #ffe27a; }
+
+/* Logo dùng chính biểu tượng app */
+.logo { background: none; box-shadow: none; transform: none; width: 3rem; height: 3rem; border-radius: 0; }
+.logo img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0.25rem 0.5rem rgba(0,0,0,0.35)); }

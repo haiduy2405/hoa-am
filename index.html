@@ -10,9 +10,9 @@
   <link rel="manifest" href="manifest.webmanifest">
   <script>window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); window.__bip = e; });</script>
   <!-- stamp:start -->
-  <link rel="stylesheet" href="css/fonts.css?v=0.18.3">
-  <link rel="stylesheet" href="css/style.css?v=0.18.3">
-  <script type="importmap">{"imports":{"./js/export.js":"./js/export.js?v=0.18.3","./js/learn.js":"./js/learn.js?v=0.18.3","./js/midi.js":"./js/midi.js?v=0.18.3","./js/midiui.js":"./js/midiui.js?v=0.18.3","./js/pianodock.js":"./js/pianodock.js?v=0.18.3","./js/player.js":"./js/player.js?v=0.18.3","./js/progress.js":"./js/progress.js?v=0.18.3","./js/songmidi.js":"./js/songmidi.js?v=0.18.3","./js/store.js":"./js/store.js?v=0.18.3","./js/title.js":"./js/title.js?v=0.18.3","./js/version.js":"./js/version.js?v=0.18.3"}}</script>
+  <link rel="stylesheet" href="css/fonts.css?v=0.19.0">
+  <link rel="stylesheet" href="css/style.css?v=0.19.0">
+  <script type="importmap">{"imports":{"./js/export.js":"./js/export.js?v=0.19.0","./js/learn.js":"./js/learn.js?v=0.19.0","./js/midi.js":"./js/midi.js?v=0.19.0","./js/midiui.js":"./js/midiui.js?v=0.19.0","./js/pianodock.js":"./js/pianodock.js?v=0.19.0","./js/player.js":"./js/player.js?v=0.19.0","./js/progress.js":"./js/progress.js?v=0.19.0","./js/songmidi.js":"./js/songmidi.js?v=0.19.0","./js/store.js":"./js/store.js?v=0.19.0","./js/title.js":"./js/title.js?v=0.19.0","./js/version.js":"./js/version.js?v=0.19.0"}}</script>
   <!-- stamp:end -->
 </head>
 <body>
@@ -20,14 +20,7 @@
 
   <header class="top">
     <div class="brand" aria-label="Nốt Rơi">
-      <span class="logo" aria-hidden="true">
-        <svg viewBox="0 0 32 32">
-          <rect x="3" y="4" width="26" height="24" rx="5" fill="#fff"/>
-          <path d="M11.7 4v24M20.3 4v24" stroke="#d9d4f5" stroke-width="1.2"/>
-          <rect x="8.6" y="4" width="6" height="14" rx="1.6" fill="#2a2370"/>
-          <rect x="17.4" y="4" width="6" height="14" rx="1.6" fill="#2a2370"/>
-        </svg>
-      </span>
+      <span class="logo" aria-hidden="true"><img src="assets/favicon.svg" alt="" width="48" height="48"></span>
       <div class="brand-text">
         <div class="brand-row"><span class="brand-name">Nốt Rơi</span><span class="ver-pill" id="foot-ver"></span></div>
         <div class="brand-credit"><span>Made by <b id="foot-author"></b></span><span class="sep" aria-hidden="true"></span><span id="foot-year"></span></div>
@@ -59,6 +52,6 @@
 <dialog id="dlg-library"><div class="dlg" id="dlg-library-body"></div></dialog>
 
 <div id="piano-dock" class="piano-dock"></div>
-<script type="module" src="js/app.js?v=0.18.3"></script>
+<script type="module" src="js/app.js?v=0.19.0"></script>
 </body>
 </html>
