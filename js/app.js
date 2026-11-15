@@ -437,20 +437,12 @@ function showUpdate(ver) {
   const status = h('p', { class: 'hint', text: '' });
   const go = h('button', { type: 'button', class: 'btn-primary big', text: 'Cập nhật ngay', onclick: async () => {
     go.disabled = true; go.textContent = 'Đang cập nhật...';
-    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    status.textContent = 'Đang tải bản mới, vài giây thôi...';
     try {
-      // GitHub Pages có thể mới đổi một phần; đợi tới khi các file thường (không kèm ?t=) cũng đã là bản mới rồi mới tải lại.
-      let fresh = false;
-      for (let i = 0; i < 40 && !fresh; i++) {
-        try {
-          const t = await (await fetch('js/version.js', { cache: 'reload' })).text();
-          fresh = t.includes(`'${ver}'`);
-        } catch (e) { /* thử lại */ }
-        if (!fresh) { status.textContent = 'Máy chủ đang đổi sang bản mới, vài giây nữa...'; await sleep(3000); }
-      }
       for (const k of await caches.keys()) await caches.delete(k);
       for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
     } catch (e) { /* vẫn tải lại */ }
+    // Địa chỉ có tham số ?u= nên máy chủ luôn trả index.html mới; trong đó css/js đã gắn số phiên bản nên cũng là bản mới.
     location.replace(location.pathname + '?u=' + Date.now());
   } });
   dlg.append(h('div', { class: 'dlg' },

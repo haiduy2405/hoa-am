@@ -1,7 +1,8 @@
 // Mỗi lần có thay đổi phải tăng VERSION (sửa nhỏ: số cuối, thêm tính năng: số giữa) và cập nhật NOTES.
-export const VERSION = '0.17.5';
+export const VERSION = '0.17.6';
 export const AUTHOR = 'duyluma';
 export const NOTES = [
+  'Sửa nút Cập nhật bị kẹt: file css/js gắn số phiên bản nên luôn tải bản mới, không đợi bộ nhớ đệm máy chủ',
   'Thiết kế lại góc thương hiệu: logo ô vuông bo tròn, nhãn phiên bản, dòng Made by duyluma và năm',
   'Nút đổi tên thành Tạo lối tắt, tự tối đi khi đã có lối tắt',
   'Phiên bản, Made by duyluma và năm hiện tại hiện ngay dưới tên app ở góc trên trái',
