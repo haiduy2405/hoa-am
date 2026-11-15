@@ -1,4 +1,4 @@
-# Hòa Âm
+# Nốt Rơi
 
 Mở file MIDI, phát qua đàn organ của bạn (thiết kế cho Yamaha PSR-S975, nối USB), chỉnh âm sắc và âm lượng từng phần, đổi tông, tải lại, và học bài với nốt rơi như game.
 
@@ -13,7 +13,7 @@ Chạy hoàn toàn trên trình duyệt, không cần cài gì, không gửi d�
 5. **Tải file .mid** lưu bài đã chỉnh (nhiều track, giữ tempo, pedal, bánh pitch).
 6. **Học bài này** để tập với nốt rơi (bên dưới). Đang học vẫn đổi được file bằng nút **Mở file khác**.
 
-Hòa Âm không phát âm thanh qua loa máy tính (trừ tiếng bíp đếm ngược khi học): mọi tiếng nhạc đều đi qua đàn.
+Nốt Rơi không phát âm thanh qua loa máy tính (trừ tiếng bíp đếm ngược khi học): mọi tiếng nhạc đều đi qua đàn.
 
 ### Học bài theo nốt rơi
 
@@ -79,3 +79,9 @@ Test phủ đọc và ghi file MIDI (running status, tempo map, pedal), sửa n�
 - Cú bấm chuột hoặc phím bất kỳ đầu tiên đưa cả trang vào toàn màn hình (trình duyệt cần một thao tác của bạn mới cho). Esc để thoát, thoát rồi thì không bị ép vào lại.
 - Không bôi đen, không nhấp đúp chọn chữ, không menu chuột phải (trừ trong ô nhập chữ như tên bài).
 - **Cài app**: bấm nút "Cài app" ở thanh trên (Chrome/Edge), hoặc menu trình duyệt > Cài đặt ứng dụng. Mở từ biểu tượng là toàn màn hình luôn. Trên iPhone/iPad: Chia sẻ > Thêm vào Màn hình chính (chạy toàn màn hình nhưng iOS không có nút Cài app).
+
+## Màn hình và cập nhật
+
+- Chỉ dùng trên máy tính. Cỡ chữ gốc co giãn theo cửa sổ (16px ở 1600x900, 25,6px ở 2560x1440, tối đa 40px), mọi kích thước tính theo rem nên cả app, kể cả canvas nốt rơi, lớn theo màn hình.
+- Cứ 20 giây và mỗi lần quay lại cửa sổ, app hỏi máy chủ số phiên bản. Có bản mới thì hiện hộp thoại không đóng được, bấm **Cập nhật ngay** để tải lại. Bài đang mở được lưu trước đó.
+- Service worker luôn hỏi lại máy chủ (no-cache), nên bản mới đẩy lên là dùng ngay, không bị kẹt bộ nhớ đệm 10 phút của GitHub Pages. Phần còn lại là thời gian GitHub tự triển khai.

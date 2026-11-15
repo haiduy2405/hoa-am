@@ -103,7 +103,7 @@ export function createLearn(env) {
   let open = false, timer = 0, raf = 0, dragging = false, warnedOut = false;
   let loop = { on: false, a: 1, b: 4 };
   const els = {};
-  let geo = null, cw = 0, chh = 0, dpr = 1;
+  let geo = null, cw = 0, chh = 0, dpr = 1, U = 1;
 
   // ---------- Dựng dữ liệu từ bài ----------
   function build() {
@@ -458,13 +458,16 @@ export function createLearn(env) {
   function layout() {
     if (!els.canvas) return;
     const r = els.stage.getBoundingClientRect();
-    cw = Math.max(1, Math.floor(r.width));
-    chh = Math.max(1, Math.floor(r.height));
+    // Vẽ theo đơn vị 16px của giao diện cơ sở; U phóng to theo cỡ chữ gốc để màn lớn (2560x1440) không bị nhỏ.
+    U = (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16;
+    const pw = Math.max(1, Math.floor(r.width)), ph = Math.max(1, Math.floor(r.height));
+    cw = Math.max(1, Math.floor(pw / U));
+    chh = Math.max(1, Math.floor(ph / U));
     dpr = Math.min(2, window.devicePixelRatio || 1);
-    els.canvas.width = cw * dpr;
-    els.canvas.height = chh * dpr;
-    els.canvas.style.width = cw + 'px';
-    els.canvas.style.height = chh + 'px';
+    els.canvas.width = Math.round(pw * dpr);
+    els.canvas.height = Math.round(ph * dpr);
+    els.canvas.style.width = pw + 'px';
+    els.canvas.style.height = ph + 'px';
     if (!song) return;
     const [lo, hi] = range();
     const whites = [];
@@ -663,7 +666,7 @@ export function createLearn(env) {
   function draw() {
     if (!open || !geo || !song) return;
     const g = els.canvas.getContext('2d');
-    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.setTransform(dpr * U, 0, 0, dpr * U, 0, 0);
     const { hitY, kbH, map } = geo;
     const now = performance.now();
     const ppm = hitY / set.look;

@@ -119,9 +119,14 @@ export function createStudio(env) {
   function build() {
     root.replaceChildren();
     els.empty = h('div', { class: 'studio-empty' },
-      h('p', { class: 'studio-lead', text: 'Mở một bài MIDI để nghe qua đàn và học.' }),
-      h('p', { class: 'hint', text: 'Kéo thả file .mid vào bất kỳ đâu trên trang, hoặc chọn từ máy. Bài được phát qua cổng MIDI của đàn, nên hãy nối đàn trước. File không gửi đi đâu.' }),
-      h('div', { class: 'studio-empty-actions' }, btn('Mở file MIDI', pickFile, 'btn-primary')),
+      h('div', { class: 'empty-main' },
+        h('p', { class: 'studio-lead', text: 'Mở một bài MIDI, nghe qua đàn và học với nốt rơi.' }),
+        h('p', { class: 'hint', text: 'Kéo thả file .mid vào bất kỳ đâu trên trang, hoặc chọn từ máy. Bài được phát qua cổng MIDI của đàn, nên hãy nối đàn trước. File không gửi đi đâu.' }),
+        h('div', { class: 'studio-empty-actions' }, btn('Mở file MIDI', pickFile, 'btn-primary big')),
+        h('ol', { class: 'steps' },
+          h('li', {}, h('b', { text: 'Nối đàn. ' }), 'Cắm cáp vào cổng USB TO HOST rồi bật đàn.'),
+          h('li', {}, h('b', { text: 'Mở bài. ' }), 'Chọn file .mid, chỉnh âm sắc và âm lượng từng phần.'),
+          h('li', {}, h('b', { text: 'Học bài. ' }), 'Nốt rơi xuống phím đàn, chơi đúng nhịp để ghi điểm.'))),
       els.recent = h('div', { class: 'recent' }));
 
     els.view = h('div', { class: 'studio-view', hidden: true });
@@ -133,10 +138,10 @@ export function createStudio(env) {
   }
 
   function renderRecent() {
-    const list = env.recent().slice(0, 5);
-    els.recent.replaceChildren(...(list.length ? [h('b', { text: 'Bài gần đây' }), ...list.map((s) =>
+    const list = env.recent().slice(0, 8);
+    els.recent.replaceChildren(h('b', { text: 'Bài gần đây' }), ...(list.length ? list.map((s) =>
       h('button', { type: 'button', class: 'recent-item', onclick: () => env.openSaved(s.id) },
-        h('span', { text: s.title || 'Bài chưa đặt tên' }), h('i', { text: `${s.parts} phần, ${s.notes.toLocaleString('vi-VN')} nốt` })))] : []));
+        h('span', { text: s.title || 'Bài chưa đặt tên' }), h('i', { text: `${s.parts} phần, ${s.notes.toLocaleString('vi-VN')} nốt` }))) : [h('p', { class: 'hint', text: 'Bài bạn mở sẽ hiện ở đây, lần sau bấm là vào ngay.' })]));
   }
 
   function renderHead() {

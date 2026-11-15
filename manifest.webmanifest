@@ -1,13 +1,12 @@
 {
-  "name": "Hòa Âm",
-  "short_name": "Hòa Âm",
+  "name": "Nốt Rơi",
+  "short_name": "Nốt Rơi",
   "description": "Dò hợp âm, sửa nhạc MIDI và học bài trên đàn organ của bạn.",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",
   "display_override": ["fullscreen", "standalone"],
-  "orientation": "any",
-  "background_color": "#121018",
+    "background_color": "#121018",
   "theme_color": "#13101a",
   "lang": "vi",
   "icons": [

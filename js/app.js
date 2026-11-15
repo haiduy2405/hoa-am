@@ -156,7 +156,7 @@ function buildSettingsDialog() {
   seg('Cách gọi quãng tám', 'Đàn Yamaha gọi phím giữa là C3. Chuẩn quốc tế gọi là C4.', 'octave', [['yamaha', 'Yamaha'], ['intl', 'Quốc tế']]);
   body.replaceChildren(closeBtn(dlg), h('h3', { text: 'Cài đặt' }), h('p', { class: 'sub', text: 'Mọi thay đổi được lưu ngay trên trình duyệt này.' }), ...rows,
     h('div', { class: 'set-block' },
-      h('b', { text: `Hòa Âm ${VERSION}, làm bởi ${AUTHOR}` }),
+      h('b', { text: `Nốt Rơi ${VERSION}, làm bởi ${AUTHOR}` }),
       h('ul', { class: 'notes' }, ...NOTES.map((n) => h('li', { text: n })))),
     h('div', { class: 'dlg-actions' }, h('button', { type: 'button', class: 'btn-ghost', text: 'Khôi phục mặc định', onclick: () => { Object.assign(S, DEFAULTS); saveSettingsSoon(); buildSettingsDialog(); } })));
 }
@@ -309,5 +309,47 @@ installBtn.addEventListener('click', async () => {
   installEvt = null;
   installBtn.hidden = true;
 });
-window.addEventListener('appinstalled', () => { installBtn.hidden = true; toast('Đã cài Hòa Âm ra màn hình.'); });
+window.addEventListener('appinstalled', () => { installBtn.hidden = true; toast('Đã cài Nốt Rơi ra màn hình.'); });
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+
+// ======================= Bản mới: bắt buộc cập nhật =======================
+// Cứ 20 giây (và mỗi lần quay lại cửa sổ) hỏi máy chủ số phiên bản mới nhất. Có bản mới thì hiện hộp thoại không đóng được.
+const verNum = (v) => v.split('.').map((x) => +x || 0);
+const isNewer = (a, b) => { const x = verNum(a), y = verNum(b); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); return false; };
+let updateShown = false;
+function showUpdate(ver) {
+  if (updateShown) return;
+  updateShown = true;
+  studio.stop();
+  saveNow(studio.getSong());
+  document.querySelectorAll('dialog[open]').forEach((d) => d.close());
+  const dlg = h('dialog', { class: 'update-dlg', id: 'dlg-update' });
+  dlg.addEventListener('cancel', (e) => e.preventDefault()); // Esc không đóng được
+  const go = h('button', { type: 'button', class: 'btn-primary big', text: 'Cập nhật ngay', onclick: async () => {
+    go.disabled = true; go.textContent = 'Đang cập nhật...';
+    try { for (const k of await caches.keys()) await caches.delete(k); } catch (e) { /* bỏ qua */ }
+    try { for (const r of await navigator.serviceWorker.getRegistrations()) await r.update(); } catch (e) { /* bỏ qua */ }
+    location.reload();
+  } });
+  dlg.append(h('div', { class: 'dlg' },
+    h('h3', { text: 'Có phiên bản mới' }),
+    h('p', { class: 'sub', text: `Bạn đang dùng ${VERSION}, bản mới nhất là ${ver}. Cần cập nhật để tiếp tục dùng. Bài đang mở đã được lưu.` }),
+    h('div', { class: 'dlg-actions' }, go)));
+  document.body.append(dlg);
+  dlg.showModal();
+  go.focus();
+}
+async function checkUpdate() {
+  try {
+    const r = await fetch('js/version.js?t=' + Date.now(), { cache: 'no-store' });
+    const m = /VERSION\s*=\s*'([\d.]+)'/.exec(await r.text());
+    if (m && isNewer(m[1], VERSION)) showUpdate(m[1]);
+  } catch (e) { /* mất mạng thì thôi, lần sau thử lại */ }
+}
+if (location.protocol !== 'file:') {
+  setInterval(() => { if (!document.hidden) checkUpdate(); }, 20000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkUpdate(); });
+  window.addEventListener('focus', checkUpdate);
+  checkUpdate();
+}
+window.__hoaam.checkUpdate = checkUpdate;
