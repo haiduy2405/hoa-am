@@ -1,7 +1,9 @@
 // Mỗi lần có thay đổi phải tăng VERSION (sửa nhỏ: số cuối, thêm tính năng: số giữa) và cập nhật NOTES.
-export const VERSION = '0.17.7';
+export const VERSION = '0.18.1';
 export const AUTHOR = 'duyluma';
 export const NOTES = [
+  'Sửa tên bài Vết Mưa; màn hình chính không còn cuộn, Bài gần đây chỉ hiện 5 bài; sửa khung sơ đồ nốt rơi co giãn đúng',
+  'Màn hình bài hát vừa khít một màn hình không cần cuộn: sơ đồ nốt rơi tự co giãn, nhạc cụ chuyển vào hộp riêng, gọn lại player và dải nút',
   'Tạo lối tắt: bắt tín hiệu cài sớm hơn, và khi Chrome chưa cho thì hiện danh sách kiểm tra từng điều kiện',
   'Sửa nút Cập nhật bị kẹt: file css/js gắn số phiên bản nên luôn tải bản mới, không đợi bộ nhớ đệm máy chủ',
   'Thiết kế lại góc thương hiệu: logo ô vuông bo tròn, nhãn phiên bản, dòng Made by duyluma và năm',

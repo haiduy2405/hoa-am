@@ -134,13 +134,16 @@ export function createStudio(env) {
     els.preview = h('div', { class: 'preview' });
     els.opts = h('div', { class: 'opts' });
     els.dock = h('div', { class: 'dock' });
-    els.mixer = h('details', { class: 'mixer' }, h('summary', { text: 'Chỉnh từng phần và xuất file .mid' }), h('div', { class: 'mixer-tools' }, btn('Xuất file .mid', () => exportMid(), 'btn-ghost')), els.parts);
+    els.mixer = h('dialog', { class: 'mixer-dlg' }, h('div', { class: 'dlg' }, h('h3', { text: 'Nhạc cụ của bài' }),
+      h('p', { class: 'sub', text: 'Đổi âm sắc, chỉnh âm lượng, tắt tiếng từng phần.' }), els.parts,
+      h('div', { class: 'dlg-actions' }, btn('Xuất file .mid', () => exportMid(), 'btn-ghost big'), btn('Xong', () => els.mixer.close(), 'btn-primary big'))));
+    els.mixer.addEventListener('click', (e) => { if (e.target === els.mixer) els.mixer.close(); });
     els.view.append(els.head, els.bar, els.preview, els.opts, els.dock, els.mixer);
     root.append(els.empty, els.view);
   }
 
   function renderRecent() {
-    const list = env.recent().slice(0, 8);
+    const list = env.recent().slice(0, 5);
     els.recent.replaceChildren(h('b', { text: 'Bài gần đây' }), ...(list.length ? list.map((s) =>
       h('button', { type: 'button', class: 'recent-item', onclick: () => env.openSaved(s.id) },
         h('span', { text: s.title || 'Bài chưa đặt tên' }), h('i', { text: `${s.parts} phần, ${s.notes.toLocaleString('vi-VN')} nốt` }))) : [h('p', { class: 'hint', text: 'Bài bạn mở sẽ hiện ở đây, lần sau bấm là vào ngay.' })]));
@@ -153,6 +156,7 @@ export function createStudio(env) {
       h('div', { class: 'studio-title' }, title,
         h('span', { text: `${song.parts.length} phần, ${song.parts.reduce((a, p) => a + p.notes.length, 0).toLocaleString('vi-VN')} nốt` })),
       h('div', { class: 'studio-head-actions' },
+        btn('Nhạc cụ', () => els.mixer.showModal(), 'btn-ghost', { title: 'Đổi âm sắc, âm lượng từng phần, xuất file .mid' }),
         els.out = h('button', { type: 'button', class: 'out-chip', onclick: () => env.openDevice() })));
     renderOut();
   }
