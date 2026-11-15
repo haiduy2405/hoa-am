@@ -2,7 +2,7 @@
   "name": "Hòa Âm",
   "short_name": "Hòa Âm",
   "description": "Dò hợp âm, sửa nhạc MIDI và học bài trên đàn organ của bạn.",
-  "start_url": "./#hop-am",
+  "start_url": "./",
   "scope": "./",
   "display": "fullscreen",
   "display_override": ["fullscreen", "standalone"],

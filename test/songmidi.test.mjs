@@ -1,10 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  GM, parseMidi, writeMidi, makeSong, newSong, makeClock, songEnd, extractChords, partFromChords, transposeNotes,
+  GM, parseMidi, writeMidi, makeSong, newSong, makeClock, songEnd, transposeNotes,
   quantizeNotes, scaleTempo, serializeSong, deserializeSong, kindFor, barBeats, freeChannel,
 } from '../js/songmidi.js';
-import { chordText } from '../js/engine.js';
 
 // Am F C G, mỗi hợp âm một ô nhịp 4/4: piano rải hợp âm + bass nốt gốc
 function demo() {
@@ -84,25 +83,6 @@ test('tempo map converts ticks and ms both ways', () => {
   assert.equal(Math.round(c.tickToMs(t + 480) - ms), 500); // 120 BPM
   assert.equal(Math.round(c.msToTick(ms)), t);
   assert.equal(Math.round(c.msToTick(c.tickToMs(5000))), 5000);
-});
-
-test('extract chords from bars, skipping drums', () => {
-  const s = demo();
-  const ids = s.parts.map((p) => p.id);
-  const ev = extractChords(s, { partIds: ids, unitBeats: 4 });
-  assert.deepEqual(ev.map((e) => chordText(e.chord)), ['Am', 'F', 'C', 'G']);
-  assert.deepEqual(ev.map((e) => e.beat), [0, 4, 8, 12]);
-  const half = extractChords(s, { partIds: ids, unitBeats: 2 });
-  assert.deepEqual(half.map((e) => chordText(e.chord)), ['Am', 'F', 'C', 'G']);
-});
-
-test('chords to part and back', () => {
-  const s = demo();
-  const ev = extractChords(s, { partIds: s.parts.map((p) => p.id), unitBeats: 4 }).map((e, i) => ({ id: 'e' + i, ...e }));
-  const part = partFromChords(ev, { ppq: 480, beats: 4 });
-  const s2 = makeSong({ ppq: 480, parts: [part] });
-  const back = extractChords(s2, { partIds: [part.id], unitBeats: 4 });
-  assert.deepEqual(back.map((e) => chordText(e.chord)), ['Am', 'F', 'C', 'G']);
 });
 
 test('edit helpers', () => {

@@ -1,7 +1,6 @@
-// Đọc và ghi file MIDI chuẩn (SMF), thao tác trên bản nhạc MIDI, trích hợp âm từ nốt.
+// Đọc và ghi file MIDI chuẩn (SMF), thao tác trên bản nhạc MIDI.
 // Hàm thuần, không đụng DOM, để dùng chung cho app và test.
 
-import { detect, transposeChord, voiceChord } from './engine.js';
 
 export const GM = [
   'Acoustic Grand Piano', 'Bright Acoustic Piano', 'Electric Grand Piano', 'Honky-tonk Piano', 'Electric Piano 1', 'Electric Piano 2', 'Harpsichord', 'Clavinet',
@@ -293,71 +292,4 @@ export function quantizeNotes(notes, grid, { ends = false } = {}) {
 export function scaleTempo(song, bpm) {
   const ratio = bpm / song.tempos[0].bpm;
   for (const t of song.tempos) t.bpm = Math.max(20, Math.min(300, t.bpm * ratio));
-}
-
-// ---------- Lấy hợp âm từ nốt ----------
-
-// unitBeats: độ dài mỗi lần "nghe" tính theo phách (nốt đen). Trả về [{beat, chord}] chỉ gồm chỗ hợp âm đổi.
-export function extractChords(song, { partIds, unitBeats = 4, level = 0 }) {
-  const ppq = song.ppq;
-  const unit = Math.max(1, Math.round(unitBeats * ppq));
-  const parts = song.parts.filter((p) => partIds.includes(p.id) && p.channel !== 9);
-  const notes = parts.flatMap((p) => p.notes).sort((a, b) => a.t - b.t);
-  const end = songEnd(song);
-  const out = [];
-  let prev = null;
-  let maxDur = 0;
-  for (const n of notes) if (n.d > maxDur) maxDur = n.d;
-  let from = 0;
-  for (let s = 0; s < end; s += unit) {
-    const e = s + unit;
-    while (from < notes.length && notes[from].t + maxDur < s) from++;
-    const byPitch = new Map();
-    for (let i = from; i < notes.length && notes[i].t < e; i++) {
-      const n = notes[i];
-      const ov = Math.min(e, n.t + n.d) - Math.max(s, n.t);
-      if (ov > 0) byPitch.set(n.n, (byPitch.get(n.n) || 0) + ov);
-    }
-    const pcW = new Array(12).fill(0);
-    for (const [pitch, w] of byPitch) pcW[pitch % 12] += w;
-    const maxW = Math.max(...pcW);
-    if (maxW <= 0) continue;
-    const need = Math.max(0.12 * unit, 0.15 * maxW);
-    const picked = new Map(); // pc -> pitch thấp nhất đủ trọng số
-    let bass = null;
-    for (const [pitch, w] of byPitch) {
-      if (w < 0.1 * unit && pcW[pitch % 12] < need) continue;
-      if (pcW[pitch % 12] < need) continue;
-      const cur = picked.get(pitch % 12);
-      if (cur == null || pitch < cur) picked.set(pitch % 12, pitch);
-      if (w >= 0.15 * unit && (bass == null || pitch < bass)) bass = pitch;
-    }
-    if (bass != null) picked.set(bass % 12, Math.min(bass, picked.get(bass % 12) ?? bass));
-    if (picked.size < 3) continue;
-    const res = detect([...picked.values()], { level });
-    const top = res.candidates[0];
-    if (!top) continue;
-    const chord = { root: top.root, type: top.type, bass: top.bass };
-    if (prev && prev.root === chord.root && prev.type === chord.type && prev.bass === chord.bass) continue;
-    prev = chord;
-    out.push({ beat: s / ppq, chord });
-  }
-  return out;
-}
-
-// Biến dãy hợp âm của bài thành một track MIDI (để ghép vào bản nhạc).
-export function partFromChords(events, { ppq, beats, transpose = 0, name = 'Hợp âm', channel = 0, program = 0 }) {
-  const ev = [...events].sort((a, b) => a.beat - b.beat);
-  if (!ev.length) return null;
-  const end = Math.ceil((ev[ev.length - 1].beat + 0.001) / beats) * beats;
-  const notes = [];
-  let prev = null;
-  ev.forEach((e, i) => {
-    const v = voiceChord(transposeChord(e.chord, transpose), prev);
-    prev = v;
-    const t = Math.round(e.beat * ppq);
-    const stop = Math.round((ev[i + 1] ? ev[i + 1].beat : end) * ppq);
-    v.forEach((n, k) => notes.push({ t, d: Math.max(1, stop - t - 4), n, v: k === 0 ? 90 : 76 }));
-  });
-  return { id: nid(), name, channel, program, vol: null, pan: null, notes, ctl: [] };
 }

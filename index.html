@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Hòa Âm – Dò hợp âm và sửa nhạc MIDI từ đàn của bạn</title>
-  <meta name="description" content="Nối đàn organ qua USB, chơi đến đâu Hòa Âm đọc hợp âm đến đó. Mở file MIDI, sửa từng nốt, phát qua đàn và tải về thành bài của bạn.">
+  <title>Hòa Âm – Nghe và học bài MIDI trên đàn của bạn</title>
+  <meta name="description" content="Mở file MIDI, phát qua đàn organ của bạn, chỉnh âm sắc và âm lượng từng phần, rồi học bài với nốt rơi.">
   <meta name="theme-color" content="#13101a">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
@@ -22,7 +22,7 @@
 <div class="app">
 
   <header class="top">
-    <a class="brand" href="#trang-chu" aria-label="Hòa Âm">
+    <div class="brand" aria-label="Hòa Âm">
       <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
         <rect x="2" y="3" width="28" height="26" rx="5" fill="none" stroke="currentColor" stroke-width="1.6"/>
         <path d="M11.3 3v26M20.7 3v26" stroke="currentColor" stroke-width="1.6"/>
@@ -30,13 +30,7 @@
         <rect x="17.6" y="3" width="6.2" height="15" rx="1.4" fill="currentColor"/>
       </svg>
       <span class="brand-name">Hòa Âm</span>
-    </a>
-
-    <nav class="nav" role="tablist" aria-label="Khu làm việc">
-      <button class="nav-tab" id="tab-home" role="tab" aria-selected="true" aria-controls="view-home" type="button">Trang chủ</button>
-      <button class="nav-tab" id="tab-chords" role="tab" aria-selected="false" aria-controls="view-chords" type="button">Hợp âm</button>
-      <button class="nav-tab" id="tab-midi" role="tab" aria-selected="false" aria-controls="view-midi" type="button">Nhạc MIDI</button>
-    </nav>
+    </div>
 
     <div class="top-actions">
       <button class="device" id="btn-device" type="button" aria-haspopup="dialog">
@@ -50,170 +44,9 @@
   </header>
 
   <main class="main">
-
-    <!-- ============ Trang chủ ============ -->
-    <div class="view" id="view-home" role="tabpanel" aria-labelledby="tab-home">
-      <section class="hero">
-        <div class="hero-text">
-          <span class="ver-chip" id="ver-chip"></span>
-          <h1>Chơi đến đâu, Hòa Âm đọc hợp âm đến đó.</h1>
-          <p class="hero-sub">Nối đàn organ qua USB để dò hợp âm trực tiếp, soạn bản hợp âm có ô nhịp và lời, mở file MIDI để sửa nốt, rồi học bài với nốt rơi trên chính cây đàn của bạn.</p>
-          <div class="hero-actions">
-            <button class="btn-primary" type="button" data-go="#hop-am">Bắt đầu dò hợp âm</button>
-            <button class="btn-ghost" type="button" id="home-open-midi">Mở file MIDI</button>
-          </div>
-          <button class="resume" id="home-resume" type="button" hidden></button>
-        </div>
-        <svg class="hero-art" viewBox="0 0 420 300" aria-hidden="true" focusable="false">
-          <defs>
-            <linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3cf88" stop-opacity="0"/><stop offset="1" stop-color="#f3cf88" stop-opacity="0.9"/></linearGradient>
-            <linearGradient id="gb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fc9b3" stop-opacity="0"/><stop offset="1" stop-color="#6fc9b3" stop-opacity="0.85"/></linearGradient>
-            <linearGradient id="gc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9a4f0" stop-opacity="0"/><stop offset="1" stop-color="#b9a4f0" stop-opacity="0.8"/></linearGradient>
-          </defs>
-          <g>
-            <rect x="46" y="18" width="30" height="80" rx="9" fill="url(#gc)"/>
-            <rect x="106" y="60" width="30" height="62" rx="9" fill="url(#ga)"/>
-            <rect x="166" y="8" width="30" height="104" rx="9" fill="url(#gb)"/>
-            <rect x="226" y="88" width="30" height="58" rx="9" fill="url(#ga)"/>
-            <rect x="286" y="40" width="30" height="92" rx="9" fill="url(#gb)"/>
-            <rect x="346" y="76" width="30" height="50" rx="9" fill="url(#gc)"/>
-          </g>
-          <rect x="20" y="150" width="380" height="2" rx="1" fill="#e3b35c" opacity="0.7"/>
-          <g fill="#efe9df" opacity="0.92">
-            <rect x="20" y="156" width="52" height="112" rx="7"/><rect x="76" y="156" width="52" height="112" rx="7"/><rect x="132" y="156" width="52" height="112" rx="7"/>
-            <rect x="188" y="156" width="52" height="112" rx="7"/><rect x="244" y="156" width="52" height="112" rx="7"/><rect x="300" y="156" width="52" height="112" rx="7"/><rect x="356" y="156" width="44" height="112" rx="7"/>
-          </g>
-          <g fill="#1b1722">
-            <rect x="54" y="156" width="32" height="68" rx="5"/><rect x="110" y="156" width="32" height="68" rx="5"/>
-            <rect x="222" y="156" width="32" height="68" rx="5"/><rect x="278" y="156" width="32" height="68" rx="5"/><rect x="334" y="156" width="32" height="68" rx="5"/>
-          </g>
-          <rect x="132" y="156" width="52" height="112" rx="7" fill="#6fc9b3" opacity="0.75"/>
-          <rect x="244" y="156" width="52" height="112" rx="7" fill="#e3b35c" opacity="0.8"/>
-        </svg>
-      </section>
-
-      <section class="cards" aria-label="Các khu làm việc">
-        <article class="card tone-a">
-          <svg class="card-ico" viewBox="0 0 32 32" aria-hidden="true"><path d="M5 22c4 0 4-12 8-12s4 12 8 12 4-8 6-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          <h2>Dò hợp âm trực tiếp</h2>
-          <p>Chơi một hợp âm, tên hiện ngay kèm các cách đọc khác, vị trí trong tông và gợi ý hợp âm kế tiếp. Bấm để đưa vào bản hợp âm.</p>
-          <button class="link-btn" type="button" data-go="#hop-am">Mở trang Hợp âm</button>
-        </article>
-        <article class="card tone-b">
-          <svg class="card-ico" viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="6" width="24" height="20" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 20h5M13 14h7M18 20h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          <h2>Phòng nhạc MIDI</h2>
-          <p>Mở file .mid, sửa từng nốt trên piano roll, đổi âm sắc, chuyển tông, rồi phát qua đàn và tải về thành bài của bạn.</p>
-          <button class="link-btn" type="button" data-go="#midi">Mở phòng nhạc</button>
-        </article>
-        <article class="card tone-c">
-          <svg class="card-ico" viewBox="0 0 32 32" aria-hidden="true"><path d="M9 4v9M16 9v9M23 3v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M4 26h24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          <h2>Học bài với nốt rơi</h2>
-          <p>Nốt rơi xuống phím đàn, bài đợi bạn chơi đúng tay phải, tay trái. Chọn tốc độ, âm lượng từng tay và lặp từng đoạn.</p>
-          <button class="link-btn" type="button" id="home-learn">Chọn bài để học</button>
-        </article>
-      </section>
-
-      <section class="home-grid">
-        <div class="home-panel">
-          <h2>Bắt đầu trong ba bước</h2>
-          <ol class="steps">
-            <li><b>Nối đàn.</b> Cắm cáp vào cổng USB TO HOST của đàn rồi bật đàn.</li>
-            <li><b>Cho phép MIDI.</b> Dùng Chrome hoặc Edge, bấm cho phép khi trình duyệt hỏi.</li>
-            <li><b>Chơi.</b> Hợp âm hiện ngay. Mọi tiếng đều phát ra loa của đàn, không phát qua máy tính.</li>
-          </ol>
-        </div>
-        <div class="home-panel">
-          <h2 id="home-ver"></h2>
-          <ul class="notes" id="home-notes"></ul>
-          <p class="hint">Chạy hoàn toàn trên trình duyệt, không gửi dữ liệu đi đâu.</p>
-        </div>
-      </section>
-    </div>
-
-    <!-- ============ Hợp âm ============ -->
-    <div class="view" id="view-chords" role="tabpanel" aria-labelledby="tab-chords" hidden>
-
-      <section class="live" aria-label="Hợp âm đang chơi">
-        <div class="live-chord">
-          <div class="staff" aria-hidden="true"></div>
-          <p class="live-kicker">Đang chơi</p>
-          <div class="chord-live" id="chord-live" aria-live="polite" aria-atomic="true"></div>
-          <div class="notes-line">
-            <span id="notes-readout" class="notes-readout"></span>
-            <button type="button" class="link-btn" id="btn-notes-mode" title="Đổi cách gọi tên nốt"></button>
-          </div>
-          <button type="button" class="btn-capture" id="btn-capture" disabled>Thêm vào bản hợp âm</button>
-        </div>
-
-        <div class="live-side">
-          <section class="block" aria-labelledby="h-alt">
-            <h2 id="h-alt">Cách đọc khác</h2>
-            <ol class="alt-list" id="alt-list"></ol>
-          </section>
-          <section class="block" aria-labelledby="h-ana">
-            <h2 id="h-ana">Vị trí trong tông</h2>
-            <div id="analysis" class="analysis"></div>
-          </section>
-        </div>
-
-        <div class="keys" id="keyboard" role="img" aria-label="Phím đàn, sáng lên theo nốt bạn đang chơi"></div>
-      </section>
-
-      <section class="suggest" aria-labelledby="h-sug">
-        <div class="suggest-head">
-          <h2 id="h-sug">Hợp âm tiếp theo</h2>
-          <p id="suggest-hint" class="hint"></p>
-        </div>
-        <div class="suggest-list" id="suggest-list"></div>
-      </section>
-
-      <section class="sheet-panel" id="sheet-wrap" aria-label="Bản hợp âm">
-        <div class="sheet-head">
-          <div class="sheet-title">
-            <input id="title" class="title" type="text" placeholder="Đặt tên bài" aria-label="Tên bài" autocomplete="off" maxlength="80">
-            <p class="key-note" id="key-note"></p>
-          </div>
-          <button class="btn-primary" id="btn-export" type="button" aria-haspopup="dialog">Xuất file</button>
-        </div>
-
-        <div class="sheet-tools" role="toolbar" aria-label="Công cụ bản hợp âm">
-          <label class="field">Tông
-            <select id="sel-key" aria-label="Tông của bài"></select>
-          </label>
-          <div class="stepper" role="group" aria-label="Chuyển tông">
-            <span class="stepper-label">Chuyển tông</span>
-            <button class="step" id="tr-down" type="button" aria-label="Hạ nửa cung">−</button>
-            <output id="tr-val">0</output>
-            <button class="step" id="tr-up" type="button" aria-label="Nâng nửa cung">+</button>
-          </div>
-          <label class="field">Nhịp
-            <select id="sel-beats" aria-label="Số phách mỗi ô nhịp">
-              <option value="2">2/4</option><option value="3">3/4</option><option value="4">4/4</option>
-              <option value="5">5/4</option><option value="6">6/4</option>
-            </select>
-          </label>
-          <label class="field">Tempo
-            <input class="num" id="bpm" type="number" min="30" max="260" inputmode="numeric" aria-label="Tempo, nhịp mỗi phút">
-          </label>
-          <button class="toggle" id="t-roman" type="button" aria-pressed="true">Số La Mã</button>
-          <span class="tools-spacer"></span>
-          <button class="btn-ghost" id="btn-undo" type="button" title="Ctrl+Z">Hoàn tác</button>
-          <button class="btn-ghost" id="btn-redo" type="button" title="Ctrl+Shift+Z">Làm lại</button>
-        </div>
-
-        <div class="sheet" id="sheet"></div>
-        <div class="sheet-foot">
-          <button class="btn-ghost" id="btn-addrow" type="button">Thêm một hàng</button>
-          <button class="btn-ghost danger" id="btn-clear" type="button">Xóa hết hợp âm</button>
-        </div>
-      </section>
-    </div>
-
-    <!-- ============ Nhạc MIDI ============ -->
-    <div class="view" id="view-midi" role="tabpanel" aria-labelledby="tab-midi" hidden>
-      <div id="studio-root"></div>
-    </div>
+    <div id="studio-root"></div>
   </main>
+
   <footer class="foot">
     <span>Hòa Âm <span id="foot-ver"></span></span>
     <span class="dot" aria-hidden="true"></span>
@@ -221,15 +54,12 @@
   </footer>
 </div>
 
-<div class="editor" id="editor" hidden role="dialog" aria-label="Sửa hợp âm"></div>
 <div class="drop" id="drop" hidden><div>Thả file .mid vào đây để mở</div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <dialog id="dlg-device"><div class="dlg" id="dlg-device-body"></div></dialog>
 <dialog id="dlg-settings"><div class="dlg" id="dlg-settings-body"></div></dialog>
 <dialog id="dlg-library"><div class="dlg" id="dlg-library-body"></div></dialog>
-<dialog id="dlg-chords"><div class="dlg" id="dlg-chords-body"></div></dialog>
-<dialog id="dlg-export"><div class="dlg" id="dlg-export-body"></div></dialog>
 
 <script type="module" src="js/app.js"></script>
 </body>
